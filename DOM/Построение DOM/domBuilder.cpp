@@ -26,6 +26,7 @@ void Dom::delElem(struct node *p) // удаление из памяти элем
 		delete p->children[i];
 		p->children[i] = NULL;
 	}
+	p->children.clear();
 }
 // добавить потомка узлу p и возвратить потомка
 struct Dom::node* Dom::addChild(struct node *p)
