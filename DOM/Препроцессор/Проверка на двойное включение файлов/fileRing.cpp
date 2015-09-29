@@ -50,4 +50,5 @@ void FileTree::delElem(struct node *p) // удаление из памяти э�
 		delete p->children[i];
 		p->children[i] = NULL;
 	}
+	p->children.clear();
 }
