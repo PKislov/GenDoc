@@ -1,0 +1,2 @@
+lex example1.l
+g++ lex.yy.c -o example1 -ll -std=c++11
