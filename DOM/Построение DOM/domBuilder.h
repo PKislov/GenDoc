@@ -5,48 +5,52 @@
 
 class Dom
 {
-    // типы узлов
-    const std::string document="document"; // корень дерева, узел генерируется конструктором, нужен формально
-    const std::string title="title"; // заголовок документа
-    const std::string toc="toc"; // содержание (оглавление)
+    // ГІГЁГЇГ» ГіГ§Г«Г®Гў
+    const std::string document="document"; // ГЄГ®Г°ГҐГ­Гј Г¤ГҐГ°ГҐГўГ , ГіГ§ГҐГ« ГЈГҐГ­ГҐГ°ГЁГ°ГіГҐГІГ±Гї ГЄГ®Г­Г±ГІГ°ГіГЄГІГ®Г°Г®Г¬, Г­ГіГ¦ГҐГ­ ГґГ®Г°Г¬Г Г«ГјГ­Г®
+    const std::string title="title"; // Г§Г ГЈГ®Г«Г®ГўГ®ГЄ Г¤Г®ГЄГіГ¬ГҐГ­ГІГ 
+    const std::string toc="toc"; // Г±Г®Г¤ГҐГ°Г¦Г Г­ГЁГҐ (Г®ГЈГ«Г ГўГ«ГҐГ­ГЁГҐ)
     const std::string section1="section1";
     const std::string section2="section2";
     const std::string section3="section3";
     const std::string section4="section4";
-    const std::string text="text"; // произвольный текст
+    const std::string text="text"; // ГЇГ°Г®ГЁГ§ГўГ®Г«ГјГ­Г»Г© ГІГҐГЄГ±ГІ
     const std::string image="image";
-    const std::string nothing="nothing"; // пустой узел
+    const std::string nothing="nothing"; // ГЇГіГ±ГІГ®Г© ГіГ§ГҐГ«
 
     struct node
     {
-        node *parent; // указатель на родителя узла
-        std::vector <node*>children; // массив указателей на потомков узла
-        std::string id; // тип узла (текст, рисунок, заголовок и т.д.)
-        std::vector <std::string>value; // массив значений (аттрибутов) узла (у разных типов разный набор)
+        node *parent; // ГіГЄГ Г§Г ГІГҐГ«Гј Г­Г  Г°Г®Г¤ГЁГІГҐГ«Гї ГіГ§Г«Г 
+        std::vector <node*>children; // Г¬Г Г±Г±ГЁГў ГіГЄГ Г§Г ГІГҐГ«ГҐГ© Г­Г  ГЇГ®ГІГ®Г¬ГЄГ®Гў ГіГ§Г«Г 
+        std::string id; // ГІГЁГЇ ГіГ§Г«Г  (ГІГҐГЄГ±ГІ, Г°ГЁГ±ГіГ­Г®ГЄ, Г§Г ГЈГ®Г«Г®ГўГ®ГЄ ГЁ ГІ.Г¤.)
+        std::vector <std::string>value; // Г¬Г Г±Г±ГЁГў Г§Г­Г Г·ГҐГ­ГЁГ© (Г ГІГІГ°ГЁГЎГіГІГ®Гў) ГіГ§Г«Г  (Гі Г°Г Г§Г­Г»Гµ ГІГЁГЇГ®Гў Г°Г Г§Г­Г»Г© Г­Г ГЎГ®Г°)
     };
 
-    node *root; // корень дерева (всегда id равно "document")
-    node *temp; // указатель на узел, с которым в последний раз проводилась операция
+    node *root; // ГЄГ®Г°ГҐГ­Гј Г¤ГҐГ°ГҐГўГ  (ГўГ±ГҐГЈГ¤Г  id Г°Г ГўГ­Г® "document")
+    node *temp; // ГіГЄГ Г§Г ГІГҐГ«Гј Г­Г  ГіГ§ГҐГ«, Г± ГЄГ®ГІГ®Г°Г»Г¬ Гў ГЇГ®Г±Г«ГҐГ¤Г­ГЁГ© Г°Г Г§ ГЇГ°Г®ГўГ®Г¤ГЁГ«Г Г±Гј Г®ГЇГҐГ°Г Г¶ГЁГї
 
-	struct node* addChild(struct node *p); // добавить потомка узлу p и возвратить потомка
-	struct node* addBro(struct node *p); // добавить в дерево узел одинакового уpовня с p и возвратить его
-	void delElem(struct node *p); // удаляет всю часть дерева после узла p. Исп. в деструкторе.
-	inline bool isSection (const struct node *p) const; // возвращает true, если узел р - заголовок
+	struct node* addChild(struct node *p); // Г¤Г®ГЎГ ГўГЁГІГј ГЇГ®ГІГ®Г¬ГЄГ  ГіГ§Г«Гі p ГЁ ГўГ®Г§ГўГ°Г ГІГЁГІГј ГЇГ®ГІГ®Г¬ГЄГ 
+	struct node* addBro(struct node *p); // Г¤Г®ГЎГ ГўГЁГІГј Гў Г¤ГҐГ°ГҐГўГ® ГіГ§ГҐГ« Г®Г¤ГЁГ­Г ГЄГ®ГўГ®ГЈГ® ГіpГ®ГўГ­Гї Г± p ГЁ ГўГ®Г§ГўГ°Г ГІГЁГІГј ГҐГЈГ®
+	void delElem(struct node *p); // ГіГ¤Г Г«ГїГҐГІ ГўГ±Гѕ Г·Г Г±ГІГј Г¤ГҐГ°ГҐГўГ  ГЇГ®Г±Г«ГҐ ГіГ§Г«Г  p. Г€Г±ГЇ. Гў Г¤ГҐГ±ГІГ°ГіГЄГІГ®Г°ГҐ.
+	inline bool isSection (const struct node *p) const; // ГўГ®Г§ГўГ°Г Г№Г ГҐГІ true, ГҐГ±Г«ГЁ ГіГ§ГҐГ« Г° - Г§Г ГЈГ®Г«Г®ГўГ®ГЄ
 
  public:
 
     Dom();
     ~Dom();
 
-    // добавление элементов в дерево (методы для лексера):
-    void addText(FILE *f, const char *name); // Текст
-    void addToc(); // Содержание
-    void addTitle(const char *s); // Название документа
-    void addImageId(const char *s); // рисунок с id
-    void addImageRef(const char *s); // рисунок с ссылкой
-    void addSection1(const char *s); // заголовок уровня 1
-    void addSection2(const char *s); // заголовок уровня 2
-    void addSection3(const char *s); // заголовок уровня 3
-    void addSection4(const char *s); // заголовок уровня 4
+    // Г¤Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ ГЅГ«ГҐГ¬ГҐГ­ГІГ®Гў Гў Г¤ГҐГ°ГҐГўГ® (Г¬ГҐГІГ®Г¤Г» Г¤Г«Гї Г«ГҐГЄГ±ГҐГ°Г ):
+    void addText(FILE *f, const char *name); // Г’ГҐГЄГ±ГІ
+    void addToc(); // Г‘Г®Г¤ГҐГ°Г¦Г Г­ГЁГҐ
+    void addTitle(const char *s); // ГЌГ Г§ГўГ Г­ГЁГҐ Г¤Г®ГЄГіГ¬ГҐГ­ГІГ 
+    void addImageId(const char *s); // Г°ГЁГ±ГіГ­Г®ГЄ Г± id
+    void addImageRef(const char *s); // Г°ГЁГ±ГіГ­Г®ГЄ Г± Г±Г±Г»Г«ГЄГ®Г©
+    void addSection1(const char *s); // Г§Г ГЈГ®Г«Г®ГўГ®ГЄ ГіГ°Г®ГўГ­Гї 1
+    void addSection2(const char *s); // Г§Г ГЈГ®Г«Г®ГўГ®ГЄ ГіГ°Г®ГўГ­Гї 2
+    void addSection3(const char *s); // Г§Г ГЈГ®Г«Г®ГўГ®ГЄ ГіГ°Г®ГўГ­Гї 3
+    void addSection4(const char *s); // Г§Г ГЈГ®Г«Г®ГўГ®ГЄ ГіГ°Г®ГўГ­Гї 4
+    
+private:
+    Dom (const Dom &d) {}
+    Dom& operator= (const Dom &d) { return *this;}
 };
 #endif // DOMBUILDER_INCLUDED
