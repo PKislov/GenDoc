@@ -92,7 +92,7 @@ void Dom::addSection2(const char *s) // заголовок уровня 2
 	while(*s!='\0') temp->value.back().append(1, *s), ++s;
 }
 
-void Dom::addSection3(const char *s) // заголовок уровня 2
+void Dom::addSection3(const char *s) // заголовок уровня 3
 {
     decltype(temp) plast=NULL; // проверка
     for (int i=0; i< root->children.size(); ++i)
@@ -116,7 +116,7 @@ void Dom::addSection3(const char *s) // заголовок уровня 2
 	while(*s!='\0') temp->value.back().append(1, *s), ++s;
 }
 
-void Dom::addSection4(const char *s) // заголовок уровня 2
+void Dom::addSection4(const char *s) // заголовок уровня 4
 {
     decltype(temp) plast=NULL; // проверка
     for (int i=0; i< root->children.size(); ++i)
