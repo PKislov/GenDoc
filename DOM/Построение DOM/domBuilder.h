@@ -1,5 +1,9 @@
 #ifndef DOMBUILDER_INCLUDED
 #define DOMBUILDER_INCLUDED
+
+#include <string>
+#include <vector>
+
 class Dom
 {
 // типы узлов
@@ -17,16 +21,16 @@ const std::string nothing="nothing"; // пустой узел
 struct node
 {
 node *parent; // указатель на родителя узла
-std::vector children; // массив указателей на потомков узла
+std::vector <node*>children; // массив указателей на потомков узла
 std::string id; // тип узла (текст, рисунок, заголовок и т.д.)
-std::vector value; // массив значений (аттрибутов) узла (у разных типов разный набор)
+std::vector <std::string>value; // массив значений (аттрибутов) узла (у разных типов разный набор)
 };
 
 node *root; // корень дерева (всегда id равно "document")
 node *temp; // указатель на узел, с которым в последний раз проводилась операция
 
 struct node* addChild(struct node *p); // добавить потомка узлу p и возвратить потомка
-struct node* addBro(struct node *p); // добавить в дерево узел одинакового уpовня с p и возвратить его
+//struct node* addBro(struct node *p); // добавить в дерево узел одинакового уpовня с p и возвратить его
 void delElem(struct node *p); // удаляет всю часть дерева после узла p. Исп. в деструкторе.
 inline bool isSection (const struct node *p) const; // возвращает true, если узел р - заголовок
 
@@ -39,7 +43,7 @@ Dom();
 void addText(FILE *f, const char *name); // Текст
 void addToc(); // Содержание
 void addTitle(const char *s); // Название документа
-void addImageId(const char *s); // рисунок с id
+//void addImageId(const char *s); // рисунок с id
 void addImageRef(const char *s); // рисунок с ссылкой
 void addSection1(const char *s); // заголовок уровня 1
 void addSection2(const char *s); // заголовок уровня 2
