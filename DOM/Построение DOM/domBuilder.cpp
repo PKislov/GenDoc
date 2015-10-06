@@ -37,13 +37,13 @@ struct Dom::node* Dom::addChild(struct node *p)
     return p->children.back();
 }
 // добавить узел одинакового уpовня с p и возвратить его
-struct Dom::node* Dom::addBro(struct node *p)
+/*struct Dom::node* Dom::addBro(struct node *p)
 {
     if (!p || !p->parent) return NULL;
     p->parent->children.push_back(new struct node);
     p->parent->children.back()->parent=p;
     return p->parent->children.back();
-}
+}*/
 
 // возвращает true, если узел р - заголовок
 bool Dom::isSection (const struct node * p) const
@@ -71,7 +71,7 @@ void Dom::addSection1(const char *s) // заголовок уровня 1
     temp->id=section1;
     temp->value.push_back("");
     s+=std::strlen("@section1 ");
-	while(*s!='\0') temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().append(1, *s), ++s;
 }
 
 void Dom::addSection2(const char *s) // заголовок уровня 2
@@ -89,7 +89,7 @@ void Dom::addSection2(const char *s) // заголовок уровня 2
     temp->id=section2;
     temp->value.push_back("");
     s+=std::strlen("@section2 ");
-	while(*s!='\0') temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().append(1, *s), ++s;
 }
 
 void Dom::addSection3(const char *s) // заголовок уровня 3
@@ -113,7 +113,7 @@ void Dom::addSection3(const char *s) // заголовок уровня 3
     temp->id=section3;
     temp->value.push_back("");
     s+=std::strlen("@section3 ");
-	while(*s!='\0') temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().append(1, *s), ++s;
 }
 
 void Dom::addSection4(const char *s) // заголовок уровня 4
@@ -137,7 +137,7 @@ void Dom::addSection4(const char *s) // заголовок уровня 4
     temp->id=section4;
     temp->value.push_back("");
     s+=std::strlen("@section4 ");
-	while(*s!='\0') temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().append(1, *s), ++s;
 }
 
 void Dom::addToc() // Содержание
@@ -147,7 +147,7 @@ void Dom::addToc() // Содержание
 	temp=temp->parent;
 }
 
-void Dom::addImageId(const char *s) // рисунок с id
+/*void Dom::addImageId(const char *s) // рисунок с id
 {
     temp=addChild(temp);
     temp->id=image;
@@ -161,7 +161,7 @@ void Dom::addImageId(const char *s) // рисунок с id
 	while (isspace(*s)) ++s;
 	while(isalpha(*s)||isdigit(*s)) temp->value[3].append(1, *s),++s;
 	temp=temp->parent;
-}
+}*/
 
 void Dom::addImageRef(const char *s) // рисунок с ref
 {
@@ -188,7 +188,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     fclose(f);
     if (!(f = fopen(name, "rt")) || feof (f))
     {
-        printf ("Не удалось открыть файл \"%s\"\n", name);
+        printf ("Не удалось открыть временный файл \"%s\"\n", name);
 		exit (0);
     }
     temp=addChild(temp);
@@ -205,7 +205,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     remove(name);
     if (!(f = fopen(name, "wt")))
     {
-        printf ("Не удалось открыть файл \"%s\"\n", name);
+        printf ("Не удалось открыть временный файл \"%s\"\n", name);
 		exit (0);
     }
     //std::cout<<temp->value.back()<<std::endl;
