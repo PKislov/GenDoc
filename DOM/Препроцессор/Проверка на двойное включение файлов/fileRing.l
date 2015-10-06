@@ -5,7 +5,7 @@
 #include "fileRing.h"
 using namespace std;
 
-static char tName1 [100]; // выходной временный файл
+static char tName1 [L_tmpnam]; // выходной временный файл
 static char *fileIn;
 
 // основной объект дерева
@@ -39,7 +39,11 @@ int main(int argc, char *argv[])
 		printf ("Не удалось открыть файл \"%s\"\n", fileIn);
 		return 1;
 	}
-	tmpnam (tName1); // сгенерировать имя временного файла
+	if(!tmpnam (tName1)) // сгенерировать имя временного файла
+	{
+		puts("Внутренняя ошибка приложения.");
+		return 1;
+	}
 	if (!(yyout = fopen(tName1, "wt"))) // ненужный выходной поток, генерируемый лексером, сбрасывать во временный файл
 	{
 		printf ("Не удалось открыть файл \"%s\"\n", tName1);
