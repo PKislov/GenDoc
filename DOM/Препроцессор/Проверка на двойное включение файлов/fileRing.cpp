@@ -26,7 +26,6 @@ struct FileTree::node* FileTree::addChild(struct node *p)
 // добавление элементов в дерево.
 bool FileTree::addElem(const char *name) // В параметрах - имя файла
 {
-	//printf ("\n****************\n%s - child of %s\n", name, temp->name.c_str());
 	temp=addChild(temp);
 	temp->countF=0;
 	temp->name = name;
