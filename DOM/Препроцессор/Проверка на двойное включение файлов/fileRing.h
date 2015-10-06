@@ -32,7 +32,7 @@ public:
 
     // добавление элементов в дерево. В параметрах - имя файла
     bool addElem(const char *name); // возвращает false в случае закольцованности
-    
+
 private:
     FileTree (const FileTree &t) {}
     FileTree& operator= (const FileTree &f) { return *this;}
