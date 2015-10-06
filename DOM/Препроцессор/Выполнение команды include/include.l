@@ -1,42 +1,49 @@
 %{
-#include <stdio.h>
+#include <cstdio>
 #include <string>
-#include <ctype.h>
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 using namespace std;
 
-static const char *fileOut="/home/pavel/Рабочий стол/построение DOM/data.txt";
-static const char *fileIn="data.txt";
+static const char *fileOut;
+static const char *fileIn;
 static bool runIncludeRef; // равно true если в последнем вызове yylex() была выполнена хоть одна команда GETINCLUDEREF. Если true, то запустить лексер выходного файла, и так пока не будет false (т.е. не включатся все вложенные файлы).
 
 static void getIncludeRef ();
 
-#define	GETINCLUDEID {\
-	/*char *ptr=yytext;\
+/*#define	GETINCLUDEID {\
+	char *ptr=yytext;\
 	fprintf(yyout,"Включить файл: идентификатор \"");\
 	while(*ptr!=':')++ptr;++ptr;\
 	while (isspace(*ptr))++ptr;\
 	while(isalpha(*ptr)||isdigit(*ptr))putc(*ptr, yyout),++ptr;\
-	fprintf(yyout, "\".\n");*/\
+	fprintf(yyout, "\".\n");\
 		 }
-
+*/
+//@include[ \t]*\{[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETINCLUDEID
 %}
 %%  
-@include[ \t]*\{[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETINCLUDEID
 @include[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		getIncludeRef ();
 %%
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 3)
+	{
+		puts("Необходимо указать имена входного и выходного файлов!");
+		return 1;
+	}
+	fileIn = argv[1];
+	fileOut = argv[2];
 	if (!(yyin = fopen(fileIn, "rt" )))
 	{
 		printf ("Не удалось открыть файл \"%s\"\n", fileIn);
-		return 0;
+		return 1;
 	}
 	if (!(yyout = fopen(fileOut, "wt")))
 	{
 		printf ("Не удалось открыть файл \"%s\"\n", fileOut);
-		return 0;
+		return 1;
 	}
 	runIncludeRef=false;
 	yylex(); // запускк лексера
@@ -45,9 +52,17 @@ int main()
 	
 	if(runIncludeRef) // если в последнем вызове yylex() была выполнена хоть одна команда GETINCLUDEREF (подключали ли хоть один файл)
 	{
-		char tName1 [100], tName2 [100];
-		tmpnam (tName1); tmpnam (tName2); // сгенерировать уникальные имена файлов
-		rename(fileOut, tName1);
+		char tName1 [L_tmpnam], tName2 [L_tmpnam]; // сгенерировать уникальные имена файлов
+		if (!tmpnam (tName1) || !tmpnam (tName2))
+		{
+			puts("Внутренняя ошибка приложения.");
+			return 1;
+		}
+		if (rename(fileOut, tName1))
+		{
+			puts("Внутренняя ошибка приложения.");
+			return 1;
+		}
 
 		while(runIncludeRef) // пока не вставим содержимое всех вложенных подключаемых файлов
 		{
@@ -55,19 +70,27 @@ int main()
 			if (!(yyin = fopen(tName1, "rt" )))
 			{
 				printf ("Не удалось открыть файл \"%s\"\n", fileIn);
-				return 0;
+				return 1;
 			}
 			if (!(yyout = fopen(tName2, "wt")))
 			{
 				printf ("Не удалось открыть файл \"%s\"\n", fileOut);
-				return 0;
+				return 1;
 			}
 			yylex();
 			fclose(yyin);
 			fclose(yyout);
-			rename(tName2, tName1); // перейти к включению в вых. файл содержимого следующих вложенных подключаемых файлов
+			if (rename(tName2, tName1)) // перейти к включению в вых. файл содержимого следующих вложенных подключаемых файлов
+			{
+				puts("Внутренняя ошибка приложения.");
+				return 1;
+			}
 		}
-		rename(tName1, fileOut);
+		if (rename(tName1, fileOut))
+		{
+			puts("Внутренняя ошибка приложения.");
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -82,7 +105,8 @@ void getIncludeRef ()
 	if (!(temp = fopen(name.c_str(), "rt" )))
 	{
 		printf("Не удалось открыть файл \"%s\"\n", name.c_str());
-		fprintf(yyout,"Не удалось открыть файл \"%s\"", name.c_str());
+		//fprintf(yyout,"Не удалось открыть файл \"%s\"", name.c_str());
+		exit(1);
 	}
 	else
 	{
