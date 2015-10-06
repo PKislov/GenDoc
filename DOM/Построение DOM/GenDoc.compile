@@ -1,0 +1,2 @@
+lex GenDoc.l
+g++ lex.yy.c domBuilder.cpp GenDoc.cpp -o GenDoc -ll -std=c++11
