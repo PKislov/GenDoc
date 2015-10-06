@@ -1,12 +1,12 @@
 %{
 #include <cstdio>
 #include <string>
-#include <ctype.h>
+#include <cctype>
 #include "fileRing.h"
 using namespace std;
 
 static char tName1 [L_tmpnam]; // выходной временный файл
-static char *fileIn;
+static const char *fileIn;
 
 // основной объект дерева
 static FileTree *tree;
