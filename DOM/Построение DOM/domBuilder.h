@@ -1,6 +1,6 @@
 #ifndef DOMBUILDER_INCLUDED
 #define DOMBUILDER_INCLUDED
-#include #include class Dom
+class Dom
 {
 // типы узлов
 const std::string document="document"; // корень дерева, узел генерируется конструктором, нужен формально
