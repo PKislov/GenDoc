@@ -1,2 +1,0 @@
-lex example1.l
-g++ lex.yy.c fileRing.cpp -o example1 -ll -std=c++11
