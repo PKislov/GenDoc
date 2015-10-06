@@ -6,6 +6,7 @@
 
 class Dom
 {
+protected:
 // типы узлов
 const std::string document="document"; // корень дерева, узел генерируется конструктором, нужен формально
 const std::string title="title"; // заголовок документа
