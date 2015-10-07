@@ -82,7 +82,7 @@ void Dom::addSection2(const char *s) // заголовок уровня 2
     if (!plast)
     {
         printf ("Заголовок \"%s\" опреден как \"section2\", не может быть объявлен раньше, чем \"section1\".\n", s);
-        exit(0);
+        exit(1);
     }
 
     temp=addChild(plast);
@@ -106,7 +106,7 @@ void Dom::addSection3(const char *s) // заголовок уровня 3
     if (!plast)
     {
         printf ("Заголовок \"%s\" опреден как \"section3\", не может быть объявлен раньше, чем заголовки более высокого уровня.\n", s);
-        exit(0);
+        exit(1);
     }
 
     temp=addChild(plast);
@@ -130,7 +130,7 @@ void Dom::addSection4(const char *s) // заголовок уровня 4
     if (!plast)
     {
         printf ("Заголовок \"%s\" опреден как \"section4\", не может быть объявлен раньше, чем заголовки более высокого уровня.\n", s);
-        exit(0);
+        exit(1);
     }
 
     temp=addChild(plast);
@@ -189,7 +189,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     if (!(f = fopen(name, "rt")) || feof (f))
     {
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
-		exit (0);
+		exit (1);
     }
     temp=addChild(temp);
     temp->id=text;
@@ -206,7 +206,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     if (!(f = fopen(name, "wt")))
     {
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
-		exit (0);
+		exit (1);
     }
     //std::cout<<temp->value.back()<<std::endl;
     temp=temp->parent;
