@@ -38,7 +38,7 @@ inline bool isSection (const struct node *p) const; // возвращает true
 public:
 
 Dom();
-~Dom();
+virtual ~Dom();
 
 // добавление элементов в дерево (методы для лексера):
 void addText(FILE *f, const char *name); // Текст
