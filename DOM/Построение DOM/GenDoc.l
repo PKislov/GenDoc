@@ -146,21 +146,21 @@ int main(int argc, char *argv[])
 		{
 			format = argv[3];
 			for (int i=0; i < format.size(); ++i) format[i] = tolower(format[i]); // перевести в нижний регистр
-			result += ("." + format);
 		}
 		else
-			{
-				format = "doc";
-				result += ".doc"; // формат по умолчанию
-			}
+			format = "doc"; // формат по умолчанию
 
 	if (type == "form")
-	{
-		result = "Формуляр "+result;
+	{		
 		gen->genForm(result, format);
+		stemp="Формуляр "+result+"."+format;
+		rename((result+"."+format).c_str(), stemp.c_str());
+		result=stemp;
+		
 	} // TODO: вставить вызовы генерации других типов документов
 	else
 		{
+			// TODO: вставить в сообщение типы всех возможных генерируемых документов
 			printf ("Тип документа \"%s\" не поддерживается программой.\nНапример: form - формуляр\n", type.c_str());
 			return 1;
 		}
