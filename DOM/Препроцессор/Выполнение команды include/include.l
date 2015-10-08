@@ -115,12 +115,11 @@ void getIncludeRef ()
 		while(!feof(temp))
 		{
 			ch=getc(temp);
-			if(!feof(temp)) stemp.push_back (ch)/*putc(ch, yyout)*/;
+			if(!feof(temp)) stemp.push_back (ch);
 		}
 		fclose(temp);	
 		if (stemp[stemp.size()-1] == 10) stemp.erase(stemp.size()-1); // удаляем символ 10
-		int stempSize = stemp.size(); // записываем буфер в файл
-		for (int i=0; i< stempSize; i++) putc(stemp[i], yyout);
+		fputs(stemp.c_str(), yyout);
 		runIncludeRef=true;
 	}
 }
