@@ -111,12 +111,16 @@ void getIncludeRef ()
 	else
 	{
 		char ch;
+		string stemp(""); // в буфер stemp записать содержимое файла temp и записать в файл yyout, кроме символа с кодом 10 в конце буфера, если такой имеется (исправление особенности текстового редактора gedit, дописывающего этот символ в конце каждого текстового файла) 
 		while(!feof(temp))
 		{
 			ch=getc(temp);
-			if(!feof(temp)) putc(ch, yyout);
+			if(!feof(temp)) stemp.push_back (ch)/*putc(ch, yyout)*/;
 		}
-		fclose(temp);
+		fclose(temp);	
+		if (stemp[stemp.size()-1] == 10) stemp.erase(stemp.size()-1); // удаляем символ 10
+		int stempSize = stemp.size(); // записываем буфер в файл
+		for (int i=0; i< stempSize; i++) putc(stemp[i], yyout);
 		runIncludeRef=true;
 	}
 }
