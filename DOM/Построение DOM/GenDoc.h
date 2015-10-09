@@ -10,9 +10,9 @@ public:
     GenDoc() {}
     ~GenDoc() {}
 
-    // метод генерации документа формуляр, в параметрах - имя вых. файла, формат (pdf, doc, lex)
+    // метод генерации документа формуляр, в параметрах - имя вых. файла, формат (pdf, odt, tex и т.д.)
     // Возвращает истину, если генерация прошла успешно
-    bool genForm (const std::string &fName, const std::string &format="doc");
+    bool genForm (const std::string &fName, const std::string &format="pdf");
 
 
 private:
