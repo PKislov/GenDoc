@@ -68,10 +68,11 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @figure[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
 %%
 
-// В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию doc).
-// Форматы: doc, lex, pdf
+// В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
+// Форматы: odt, tex, pdf, html, xml (в формате html), tei (формат TEI XML), db (DocBook, в xml), dvi - требуется TexLive
+// 	    через pandoc: doc (сначала в html через TexLive, затем в doc через pandoc), docx, markdown
 // Тип документа: form - формуляр
-// Пример команды: ./GenDoc data.txt form pdf
+// Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -148,17 +149,39 @@ int main(int argc, char *argv[])
 			for (int i=0; i < format.size(); ++i) format[i] = tolower(format[i]); // перевести в нижний регистр
 		}
 		else
-			format = "doc"; // формат по умолчанию
+			format = "pdf"; // формат по умолчанию
 
 	if (type == "form")
 	{		
-		gen->genForm(result, format);
-		stemp="Формуляр "+result+"."+format;
-		rename((result+"."+format).c_str(), stemp.c_str());
-		result=stemp;
+		gen->genForm(result, format); // запуск генератора документа
+
+		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
+		if (format == "tex" || format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
+		{
+			stemp="Формуляр "+result+"."+format;
+			if(rename((result+"."+format).c_str(), stemp.c_str()))
+			{
+				puts("Внутренняя ошибка приложения.");
+				return 1;
+			}
+			result=stemp;
+		}
+		else // если формат html, xml и др., не добавлять к имени "Формуляр "
+			{
+				if (format == "xml")
+					result += ".html";
+				else
+					if (format == "tei" || format == "db")
+						result += ".xml";
+					else
+						if (format == "markdown")
+							result += ".md";
+						else
+							result += ("."+format);
+			}
 		
 	} // TODO: вставить вызовы генерации других типов документов
-	else
+	else // if (type == "form")
 		{
 			// TODO: вставить в сообщение типы всех возможных генерируемых документов
 			printf ("Тип документа \"%s\" не поддерживается программой.\nНапример: form - формуляр\n", type.c_str());
