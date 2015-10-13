@@ -59,7 +59,7 @@ void Dom::addTitle(const char *s) // Название документа
     s += std::strlen("@title ");
     while(*s!='@')
     {
-        temp->value.back().append(1, *s);
+        temp->value.back().push_back(*s);
         ++s;
     }
     temp=temp->parent;
@@ -71,7 +71,8 @@ void Dom::addSection1(const char *s) // заголовок уровня 1
     temp->id=section1;
     temp->value.push_back("");
     s+=std::strlen("@section1 ");
-	while(*s) temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().push_back(*s), ++s;
+	delNewLineEndStr( temp->value.back());
 }
 
 void Dom::addSection2(const char *s) // заголовок уровня 2
@@ -89,7 +90,8 @@ void Dom::addSection2(const char *s) // заголовок уровня 2
     temp->id=section2;
     temp->value.push_back("");
     s+=std::strlen("@section2 ");
-	while(*s) temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().push_back(*s), ++s;
+	delNewLineEndStr( temp->value.back());
 }
 
 void Dom::addSection3(const char *s) // заголовок уровня 3
@@ -113,7 +115,8 @@ void Dom::addSection3(const char *s) // заголовок уровня 3
     temp->id=section3;
     temp->value.push_back("");
     s+=std::strlen("@section3 ");
-	while(*s) temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().push_back(*s), ++s;
+	delNewLineEndStr( temp->value.back());
 }
 
 void Dom::addSection4(const char *s) // заголовок уровня 4
@@ -137,7 +140,8 @@ void Dom::addSection4(const char *s) // заголовок уровня 4
     temp->id=section4;
     temp->value.push_back("");
     s+=std::strlen("@section4 ");
-	while(*s) temp->value.back().append(1, *s), ++s;
+	while(*s) temp->value.back().push_back(*s), ++s;
+	delNewLineEndStr( temp->value.back());
 }
 
 void Dom::addToc() // Содержание
@@ -156,10 +160,10 @@ void Dom::addToc() // Содержание
     temp->value.push_back("id");
     temp->value.push_back(""); // значение id
 	while(*s!='\"') ++s; ++s; // дойти до начала подписи
-	while(*s!='\"') temp->value[1].append(1, *s), ++s; ++s; // записать подпись
+	while(*s!='\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
 	while(*s!=':') ++s; ++s;
 	while (isspace(*s)) ++s;
-	while(isalpha(*s)||isdigit(*s)) temp->value[3].append(1, *s),++s;
+	while(isalpha(*s)||isdigit(*s)) temp->value[3].push_back(*s),++s;
 	temp=temp->parent;
 }*/
 
@@ -172,10 +176,10 @@ void Dom::addImageRef(const char *s) // рисунок с ref
     temp->value.push_back("ref");
     temp->value.push_back(""); // значение ref
 	while(*s!='\"') ++s; ++s; // дойти до начала подписи
-	while(*s!='\"') temp->value[1].append(1, *s), ++s; ++s; // записать подпись
+	while(*s!='\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
 	while(*s!='\"') ++s; ++s;
 	while (isspace(*s)) ++s;
-	while(*s!='\"') temp->value[3].append(1, *s),++s;
+	while(*s!='\"') temp->value[3].push_back(*s),++s;
 	temp=temp->parent;
 }
 
@@ -199,7 +203,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     while(!(feof(f)))
     {
         ch=fgetc(f);
-        if (!feof(f)) temp->value.back().append(1, ch);
+        if (!feof(f)) temp->value.back().push_back(ch);
     }
     fclose(f);
     remove(name);
@@ -210,4 +214,15 @@ void Dom::addText(FILE *f, const char *name) // Текст
     }
     //std::cout<<temp->value.back()<<std::endl;
     temp=temp->parent;
+}
+
+void Dom::delNewLineEndStr (std::string &s) const
+{
+    for(int i=s.size()-1; i >= 0; --i)
+    {
+        if(s[i] == 10 || s[i] == 13 || s[i] == '\n')
+            s.erase(i);
+        else
+            break;
+    }
 }
