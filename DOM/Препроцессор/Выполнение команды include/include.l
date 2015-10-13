@@ -100,12 +100,11 @@ void getIncludeRef ()
 	char *ptr=yytext;
 	while(*ptr!='\"') ++ptr; ++ptr;
 	string name("");
-	while(*ptr!='\"') name.append(1, *ptr), ++ptr; ++ptr;
+	while(*ptr!='\"') name.push_back(*ptr), ++ptr; ++ptr;
 	FILE *temp;
 	if (!(temp = fopen(name.c_str(), "rt" )))
 	{
 		printf("Не удалось открыть файл \"%s\"\n", name.c_str());
-		//fprintf(yyout,"Не удалось открыть файл \"%s\"", name.c_str());
 		exit(1);
 	}
 	else
