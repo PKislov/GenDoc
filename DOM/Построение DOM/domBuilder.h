@@ -34,6 +34,7 @@ struct node* addChild(struct node *p); // добавить потомка узл
 //struct node* addBro(struct node *p); // добавить в дерево узел одинакового уpовня с p и возвратить его
 void delElem(struct node *p); // удаляет всю часть дерева после узла p. Исп. в деструкторе.
 inline bool isSection (const struct node *p) const; // возвращает true, если узел р - заголовок
+void delNewLineEndStr (std::string &s) const; // удаляет символы новой строки на конце строки (исп. в методах addSection1)
 
 public:
 
