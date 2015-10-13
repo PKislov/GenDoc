@@ -1,9 +1,11 @@
 #include <string>
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
+#include <cstring>
 #include "GenDoc.h"
 
-bool GenDoc::genForm (const std::string &fName, const std::string &format)
+bool GenDoc::genForm (const std::string &fName, const std::string &format) const
 {
     // сначала открыть шаблон в LaTeX и вывести результат в файл result,
     // затем перевести result в требуемый формат (format)
@@ -28,13 +30,11 @@ bool GenDoc::genForm (const std::string &fName, const std::string &format)
         if (!feof(ftempl)) templBuf.push_back(ch);
     }
     fclose(ftempl);
-////////////////////////////////////////////////////////////
 
 
-    // TODO: вставить код преобразования буфера согласно DOM
+    makeBuff(root, templBuf); // преобразования буфера согласно DOM
 
 
-////////////////////////////////////////////////////////////
     // запись результата из буфера в файл
     if (!(fres = fopen(result.c_str(), "wt"))) // результат в LaTeX
     {
@@ -229,3 +229,145 @@ bool GenDoc::genForm (const std::string &fName, const std::string &format)
     return true;
 }
 
+void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
+{
+    if (!p || !p->children.size()) return; // если пустрое дерево
+    for (int i=0; i<p->children.size(); ++i) // цикл прохода дерева
+    {
+        //puts(p->children[i]->id.c_str());
+        if (p->children[i]->id == title)
+        {
+            writeTitle(p->children[i]->value[0], buf); // заполняет в шаблоне заголовок документа (title)
+        }
+        else
+            if (p->children[i]->id == toc)
+            {
+            }
+            else
+                if (p->children[i]->id == section1)
+                {
+                    writeText(std::string("\\section {")+p->children[i]->value[0]+"}\n", buf);
+                }
+                else
+                    if (p->children[i]->id == section2)
+                    {
+                        writeText(std::string("\\subsection {")+p->children[i]->value[0]+"}\n", buf);
+                    }
+                    else
+                        if (p->children[i]->id == section3)
+                        {
+                            writeText(std::string("\\subsubsection {")+p->children[i]->value[0]+"}\n", buf);
+                        }
+                        else
+                            if (p->children[i]->id == section4)
+                            {
+                                writeText(std::string("\\paragraph {")+p->children[i]->value[0]+"}\n", buf);
+                            }
+                            else
+                                if (p->children[i]->id == text)
+                                {
+                                    std::string stemp = p->children[i]->value[0];
+                                    writeText(strToLaTex(stemp), buf);
+                                }
+                                else
+                                    if (p->children[i]->id == image && p->children[i]->value[2] == "ref") // рисунок, путь к файлу рисунка
+                                    {
+                                        writeImage(p->children[i], buf);
+                                    }
+
+		if (p->children[i]->children.size())
+        {
+            makeBuff (p->children[i], buf);
+        }
+    }
+}
+
+// заполняет в шаблоне (в строке buf) заголовок документа (title, в строке t)
+void GenDoc::writeTitle (const std::string &t, std::string &buf) const
+{
+    static bool f=false;
+    if (f)
+    {
+        printf ("Команда \"@title\" была вызвана ранее, значение \"%s\" не будет указано.\n", t.c_str());
+    }
+    f=true;
+    const std::string comm="\\title{}"; // найти в buf вхождение этой команды, и вставить между скобок заголовок из t
+    for (int i=0; i<buf.size()-comm.size()+1; i++)
+    {
+        if(!buf.compare(i, comm.size(), comm)) // нашли начало команды title
+        {
+            buf.insert(i+comm.size()-1, t);
+            return;
+        }
+    }
+}
+
+// метод возвращает индекс перед выражением "\end{document}" в строке buf, используется для определения места вставки текста
+unsigned GenDoc::whereInsertText (const std::string &buf) const
+{
+    const std::string sEnd="\\end{document}";
+    for (int i=buf.size()-sEnd.size(); i>=0; i--)
+    {
+        if(!buf.compare(i, sEnd.size(), sEnd)) // нашли начало команды sEnd
+        {
+            return i;
+        }
+    }
+    printf("Некорректно построен шаблон документа: отсутствует утверждение \"%s\"!\n", sEnd.c_str());
+    exit(1);
+}
+
+// записывает текст из t в buf по индексу, вычисленному методом whereInsertText
+void GenDoc::writeText (const std::string &t, std::string &buf) const
+{
+    buf.insert(whereInsertText(buf), t);
+}
+
+void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
+{
+    /*static int countImage=1;
+    std::string stemp;*/
+
+}
+
+const std::string& GenDoc::strToLaTex (std::string &s) const
+{
+    for(int i=0; i<s.size(); ++i)
+    {
+        switch(s[i])
+        {
+        case '#':
+        case '$':
+        case '%':
+        case '&':
+        case '{':
+        case '}':
+        case '_':
+            s.insert(i, "\\");
+            ++i;
+            break;
+        case '\n':
+            s.insert(i, "\n");
+            ++i;
+            break;
+        case '\\':
+            s.insert(i, "\\textbackslash ");
+            i += std::strlen("\\textbackslash ");
+            break;
+        case '~':
+            s.insert(i, "\\textasciitilde ");
+            i += std::strlen("\\textasciitilde ");
+            break;
+        case '^':
+            s.insert(i, "\\textasciicircum ");
+            i += std::strlen("\\textasciicircum ");
+            break;
+        case '"':
+            s.insert(i, "\\dq ");
+            i += std::strlen("\\dq ");
+            break;
+
+        }
+    }
+    return s;
+}
