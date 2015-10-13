@@ -12,12 +12,25 @@ public:
 
     // метод генерации документа формуляр, в параметрах - имя вых. файла, формат (pdf, odt, tex и т.д.)
     // Возвращает истину, если генерация прошла успешно
-    bool genForm (const std::string &fName, const std::string &format="pdf");
+    bool genForm (const std::string &fName, const std::string &format="pdf") const;
 
 
 private:
     GenDoc (const GenDoc &g) {}
     GenDoc& operator= (const GenDoc &d) { return *this; }
+
+    // формирует согласно DOM содержимое документа в строке buf, содержащей шаблон
+    void makeBuff (const decltype(root) p, std::string &buf) const;
+    // заполняет в шаблоне (в строке buf) заголовок документа (title, в строке t)
+    void writeTitle (const std::string &t, std::string &buf) const;
+    // метод возвращает индекс перед выражением "\end{document}" в строке buf, используется для определения места вставки текста
+    unsigned whereInsertText (const std::string &buf) const;
+    // записывает текст из t в buf по индексу, вычисленному методом whereInsertText
+    void writeText (const std::string &t, std::string &buf) const;
+    void writeImage (const decltype(root) p, std::string &buf) const;
+    // ищет в строке s служебные символы языка LaTex и заменяет их командами LaTex, позволяющими печатать эти символы, например все найденные символы # заменит на \# (применяется в методе writeText и др.
+    const std::string& strToLaTex (std::string &s) const;
+
 };
 
 #endif // GENDOC_H_INCLUDED
