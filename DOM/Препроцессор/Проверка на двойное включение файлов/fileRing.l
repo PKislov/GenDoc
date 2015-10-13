@@ -69,7 +69,7 @@ void getIncludeRef ()
 	char *ptr=yytext;
 	while(*ptr!='\"')++ptr;++ptr; // найти имя подключаемого файла в строке команды
 	string name("");
-	while(*ptr!='\"') name.append(1, *ptr),++ptr;
+	while(*ptr!='\"') name.push_back(*ptr),++ptr;
 	FILE *temp;
 	if (!(temp = fopen(name.c_str(), "rt" ))) // проверить, что файл существует
 	{
