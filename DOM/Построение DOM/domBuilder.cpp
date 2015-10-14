@@ -149,6 +149,7 @@ void Dom::addToc() // Содержание
     temp=addChild(root);
 	temp->id=toc;
 	temp=temp->parent;
+	ftoc=true;
 }
 
 /*void Dom::addImageId(const char *s) // рисунок с id
