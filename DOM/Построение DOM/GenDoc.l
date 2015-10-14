@@ -153,7 +153,16 @@ int main(int argc, char *argv[])
 
 	if (type == "form")
 	{		
-		gen->genForm(result, format); // запуск генератора документа
+		if (gen->getToc() && format == "pdf") // если указана команда toc (содержание), то дважды запустить программу pdflatex, иначе содержание в pdf не отобразится если команда toc в начале файла
+		{
+			gen->genForm(result, format); // запуск генератора документа
+			gen->genForm(result, format);
+			remove((result+".toc").c_str()); // удалить временный файл .toc
+		}
+		else
+			{
+				gen->genForm(result, format);
+			}
 
 		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
 		if (format == "tex" || format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
