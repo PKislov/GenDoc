@@ -347,9 +347,40 @@ void GenDoc::writeText (const std::string &t, std::string &buf) const
 
 void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
 {
-    /*static int countImage=1;
-    std::string stemp;*/
+    int i = 0, j = 0;
+    while(i< p->value[3].size()) // поиск расширения в имени файла с рисунком
+    {
+        if (p->value[3][i] == '.') j = i;
+        ++i;
+    }
+    std::string stemp("");
+    if (j) // если имя файла содержит расширение
+    {
+        ++j;
+        stemp.insert(0, p->value[3], j, p->value[3].size()-j); // вставить расширение имени файла в строку stemp
+        if (stemp!="pdf"&&stemp!="png"&&stemp!="jpg"&&stemp!="jpeg") // если расширение не .pdf, .png, .jpg, .jpeg
+        {
+            printf("Формат рисунка \"%s\" не поддерживается программой!\n", p->value[3].c_str());
+            exit(1);
+        }
+    }
+    else
+    {
+        printf("Некорректное имя файла рисунка \"%s\"!\n", p->value[3].c_str());
+        exit(1);
+    }
 
+    // проверка на существование имени файла рисунка
+    FILE *fp;
+    if(!(fp = fopen(p->value[3].c_str(), "rt" )))
+	{
+		printf ("Не удалось найти файл рисунка \"%s\"\n", p->value[3].c_str());
+		exit(1);
+	}
+	fclose(fp);
+	// сформировать код вставки рисунка на LaTex
+    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{"+p->value[3]+"}}\n\\caption{"+p->value[1]+"}\n%\\label{fig:image} % ссылка\n\\end{figure}";
+    writeText(stemp, buf);
 }
 
 // ищет в строке s служебные символы языка LaTex и заменяет их командами LaTex, позволяющими печатать эти символы, например все найденные символы # заменит на \# (применяется в методе writeText и др.)
