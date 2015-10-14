@@ -19,6 +19,8 @@ const std::string text="text"; // произвольный текст
 const std::string image="image";
 const std::string nothing="nothing"; // пустой узел
 
+bool  ftoc=false; // флаг, сигнализирующий, что в дерево занесена команда toc
+
 struct node
 {
 node *parent; // указатель на родителя узла
@@ -51,6 +53,7 @@ void addSection1(const char *s); // заголовок уровня 1
 void addSection2(const char *s); // заголовок уровня 2
 void addSection3(const char *s); // заголовок уровня 3
 void addSection4(const char *s); // заголовок уровня 4
+bool getToc () { return ftoc; } // получить значение флага ftoc
 
 private:
 Dom (const Dom &d) {}
