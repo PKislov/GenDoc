@@ -242,32 +242,32 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
         else
             if (p->children[i]->id == toc)
             {
+                writeText("\\tableofcontents\n\\newpage\n", buf);
             }
             else
                 if (p->children[i]->id == section1)
                 {
-                    writeText(std::string("\\section {")+p->children[i]->value[0]+"}\n", buf);
+                    writeSection1(p->children[i]->value[0], buf);
                 }
                 else
                     if (p->children[i]->id == section2)
                     {
-                        writeText(std::string("\\subsection {")+p->children[i]->value[0]+"}\n", buf);
+                        writeSection2(p->children[i]->value[0], buf);
                     }
                     else
                         if (p->children[i]->id == section3)
                         {
-                            writeText(std::string("\\subsubsection {")+p->children[i]->value[0]+"}\n", buf);
+                            writeSection3(p->children[i]->value[0], buf);
                         }
                         else
                             if (p->children[i]->id == section4)
                             {
-                                writeText(std::string("\\paragraph {")+p->children[i]->value[0]+"}\n", buf);
+                                writeSection4(p->children[i]->value[0], buf);
                             }
                             else
                                 if (p->children[i]->id == text)
                                 {
-                                    std::string stemp = p->children[i]->value[0];
-                                    writeText(strToLaTex(stemp), buf);
+                                    writeTextLatex(p->children[i]->value[0], buf);
                                 }
                                 else
                                     if (p->children[i]->id == image && p->children[i]->value[2] == "ref") // рисунок, путь к файлу рисунка
@@ -285,21 +285,43 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
 // заполняет в шаблоне (в строке buf) заголовок документа (title, в строке t)
 void GenDoc::writeTitle (const std::string &t, std::string &buf) const
 {
-    static bool f=false;
+    /*static bool f=false;
     if (f)
     {
         printf ("Команда \"@title\" была вызвана ранее, значение \"%s\" не будет указано.\n", t.c_str());
+        return;
     }
-    f=true;
+    f=true;*/
     const std::string comm="\\title{}"; // найти в buf вхождение этой команды, и вставить между скобок заголовок из t
     for (int i=0; i<buf.size()-comm.size()+1; i++)
     {
         if(!buf.compare(i, comm.size(), comm)) // нашли начало команды title
         {
-            buf.insert(i+comm.size()-1, t);
+            std::string stemp=t;
+            buf.insert(i+comm.size()-1, headerToLaTex(stemp));
             return;
         }
     }
+}
+void GenDoc::writeSection1 (const std::string &t, std::string &buf) const
+{
+    std::string stemp=t;
+    writeText(std::string("\\chapter {")+headerToLaTex(stemp)+"}\n", buf);
+}
+void GenDoc::writeSection2 (const std::string &t, std::string &buf) const
+{
+    std::string stemp=t;
+    writeText(std::string("\\section {")+headerToLaTex(stemp)+"}\n", buf);
+}
+void GenDoc::writeSection3 (const std::string &t, std::string &buf) const
+{
+    std::string stemp=t;
+    writeText(std::string("\\subsection {")+headerToLaTex(stemp)+"}\n", buf);
+}
+void GenDoc::writeSection4 (const std::string &t, std::string &buf) const
+{
+    std::string stemp=t;
+    writeText(std::string("\\subsubsection {")+headerToLaTex(stemp)+"}\n", buf);
 }
 
 // метод возвращает индекс перед выражением "\end{document}" в строке buf, используется для определения места вставки текста
@@ -330,9 +352,25 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
 
 }
 
+// ищет в строке s служебные символы языка LaTex и заменяет их командами LaTex, позволяющими печатать эти символы, например все найденные символы # заменит на \# (применяется в методе writeText и др.)
 const std::string& GenDoc::strToLaTex (std::string &s) const
 {
+    headerToLaTex(s);
     for(int i=0; i<s.size(); ++i)
+    {
+        if(s[i] == '\n')
+        {
+            s.insert(i, "\n");
+            ++i;
+        }
+    }
+    return s;
+}
+
+// делает то же свмое, что strToLaTex, только не дублирует переходы на новую строку
+    const std::string& GenDoc::headerToLaTex (std::string &s) const
+    {
+        for(int i=0; i<s.size(); ++i)
     {
         switch(s[i])
         {
@@ -346,28 +384,34 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
             s.insert(i, "\\");
             ++i;
             break;
-        case '\n':
-            s.insert(i, "\n");
-            ++i;
-            break;
         case '\\':
+            s.erase(i,1);
             s.insert(i, "\\textbackslash ");
-            i += std::strlen("\\textbackslash ");
+            i += std::strlen("\\textbackslash ")-1;
             break;
         case '~':
+            s.erase(i,1);
             s.insert(i, "\\textasciitilde ");
-            i += std::strlen("\\textasciitilde ");
+            i += std::strlen("\\textasciitilde ")-1;
             break;
         case '^':
+            s.erase(i,1);
             s.insert(i, "\\textasciicircum ");
-            i += std::strlen("\\textasciicircum ");
+            i += std::strlen("\\textasciicircum ")-1;
             break;
         case '"':
+            s.erase(i,1);
             s.insert(i, "\\dq ");
-            i += std::strlen("\\dq ");
+            i += std::strlen("\\dq ")-1;
             break;
-
         }
     }
     return s;
-}
+    }
+
+// записывает текст из t в buf по индексу, вычисленному методом whereInsertText, преобразует текст методом strToLaTex
+    void GenDoc::writeTextLatex (const std::string &t, std::string &buf) const
+    {
+        std::string stemp = t;
+        writeText(strToLaTex(stemp), buf);
+    }
