@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
 	const char * const fSrcIncl = "srcincl.tmp"; // временный файл для выполнения команд @include
 	remove(fSrcIncl);
-	stemp = std::string("./include ")+argv[1]+" "+fSrcIncl; 
+	stemp = std::string("./include ") + argv[1] + " " + fSrcIncl; 
 	if (std::system (stemp.c_str())) // выполнить команды @include, результат запишется в файл fSrcIncl
 		return 1;
 	fileIn = fSrcIncl;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	std::string result(""); // имя генерируемого документа
 	std::string format; // расширение генерируемого документа. Переменная нужна для преобразования строки формата в нижний регистр
 	std::string type = argv[2]; // тип генерируемого документа (формуляр, ...)
-	for (int i=0; i < type.size(); ++i) type[i] = tolower(type[i]); // перевести в нижний регистр
+	for (decltype(type.size()) i=0; i < type.size(); ++i) type[i] = tolower(type[i]); // перевести в нижний регистр
 
 	// получение имени и расширения генерируемого документа
 		int i = 0;
@@ -146,29 +146,29 @@ int main(int argc, char *argv[])
 		if (argc > 3) // если пользователь указал формат вых. файла
 		{
 			format = argv[3];
-			for (int i=0; i < format.size(); ++i) format[i] = tolower(format[i]); // перевести в нижний регистр
+			for (decltype(format.size()) i=0; i < format.size(); ++i) format[i] = tolower(format[i]); // перевести в нижний регистр
 		}
 		else
 			format = "pdf"; // формат по умолчанию
 
-	if (type == "form")
+	if (type == "form") // формуляр
 	{		
 		if (gen->getToc() && format == "pdf") // если указана команда toc (содержание), то дважды запустить программу pdflatex, иначе содержание в pdf не отобразится если команда toc в начале файла
 		{
-			gen->genForm(result, format); // запуск генератора документа
-			gen->genForm(result, format);
-			remove((result+".toc").c_str()); // удалить временный файл .toc
+			gen->genForm(result, true, format); // запуск генератора документа
+			gen->genForm(result, true, format); // false - не запускать поиск синтакс. ошибок
+			remove((result + ".toc").c_str()); // удалить временный файл .toc
 		}
 		else
 			{
-				gen->genForm(result, format);
+				gen->genForm(result, true, format);
 			}
 
 		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
 		if (format == "tex" || format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
 		{
-			stemp="Формуляр "+result+"."+format;
-			if(rename((result+"."+format).c_str(), stemp.c_str()))
+			stemp = "Формуляр " + result + "." + format;
+			if(rename((result + "." + format).c_str(), stemp.c_str()))
 			{
 				puts("Внутренняя ошибка приложения.");
 				return 1;
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 						if (format == "markdown")
 							result += ".md";
 						else
-							result += ("."+format);
+							result += ("." + format);
 			}
 		
 	} // TODO: вставить вызовы генерации других типов документов
