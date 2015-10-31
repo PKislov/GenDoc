@@ -4,7 +4,10 @@
 #include <cctype>
 #include <cstdlib>
 #include <ctime>
+#include <vector>
 using namespace std;
+
+vector<string> vlistFileName; // список имен главного и включаемых файлов, имена не должны повторяться
 
 static const char *fileOut;
 static const char *fileIn;
@@ -46,7 +49,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	runIncludeRef=false;
-	yylex(); // запускк лексера
+
+	vlistFileName.push_back(fileIn); // записать в список файлов имя главного файла
+	yylex(); // запуск лексера
 	fclose(yyin);
 	fclose(yyout);	
 	
@@ -92,6 +97,23 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+
+	const char * const listFileName = "list.tmp"; // имя файла, куда запишутся имена всех включенных файлов. 	Этот файл потом используется генератором документов (модуль GenDoc) для поиска места (файл, строка) синтаксических ошибок
+	FILE *flist;
+	remove(listFileName);
+	if (!(flist = fopen(listFileName, "wt"))) // открыть список файлов
+	{
+		// printf ("Не удалось открыть временный файл \"%s\"\n", listFileName);
+		// return 1;
+		return 0; // если файл не создастся, ошибкой не будет, просто программа не будет искать местоположение ошибок
+	}
+	for(decltype(vlistFileName.size()) i=0; i < vlistFileName.size(); ++i) // запись результата в список файлов
+	{
+		fputs(vlistFileName[i].c_str(), flist); // записать в список имя входного файла
+		fputc('\n', flist); // имена файлов пишутся с новой строки
+	}
+	fclose(flist);
+
 	return 0;
 }
 
@@ -120,5 +142,11 @@ void getIncludeRef ()
 		if (stemp[stemp.size()-1] == 10) stemp.erase(stemp.size()-1); // удаляем символ 10
 		fputs(stemp.c_str(), yyout);
 		runIncludeRef=true;
+		for(decltype(vlistFileName.size()) i=0; i < vlistFileName.size(); ++i) 
+		{
+			if (vlistFileName[i] == name) return; // такое имя файла уже есть в списке
+		}
+		// занесение имени включаемого файла в список, имена не повторяются
+		vlistFileName.push_back(name);		
 	}
 }
