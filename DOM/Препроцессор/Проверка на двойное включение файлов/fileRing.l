@@ -66,10 +66,10 @@ void getIncludeRef ()
 		--tree->temp->countF;
 		return;
 	}
-	char *ptr=yytext;
-	while(*ptr!='\"')++ptr;++ptr; // найти имя подключаемого файла в строке команды
+	char *ptr = yytext;
+	while(*ptr!='\"') ++ptr; ++ptr; // найти имя подключаемого файла в строке команды
 	string name("");
-	while(*ptr!='\"') name.push_back(*ptr),++ptr;
+	while(*ptr!='\"') name.push_back(*ptr), ++ptr;
 	FILE *temp;
 	if (!(temp = fopen(name.c_str(), "rt" ))) // проверить, что файл существует
 	{
