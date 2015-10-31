@@ -6,7 +6,7 @@
 Dom::Dom()
 {
 	root = new struct node;
-    root->parent=NULL;
+    root->parent = NULL;
 	root->id = document;
 	temp = root;
 }
@@ -18,9 +18,10 @@ Dom::~Dom()
 void Dom::delElem(struct node *p) // удаление из памяти элементов дерева после узла p
 {
 	if (!p || !p->children.size()) return;
-	for (int i=0; i<p->children.size(); ++i)
-		if (p->children[i]->children.size()) delElem (p->children[i]);
-	for (int i=0; i<p->children.size(); ++i)
+	for (decltype(p->children.size()) i=0; i < p->children.size(); ++i)
+		if (p->children[i]->children.size())
+            delElem (p->children[i]);
+	for (decltype(p->children.size()) i=0; i < p->children.size(); ++i)
 	{
 		//puts(p->children[i]->id.c_str());
 		delete p->children[i];
@@ -33,7 +34,7 @@ struct Dom::node* Dom::addChild(struct node *p)
 {
     if (!p) return NULL;
     p->children.push_back(new struct node);
-    p->children.back()->parent=p;
+    p->children.back()->parent = p;
     return p->children.back();
 }
 // добавить узел одинакового уpовня с p и возвратить его
@@ -41,7 +42,7 @@ struct Dom::node* Dom::addChild(struct node *p)
 {
     if (!p || !p->parent) return NULL;
     p->parent->children.push_back(new struct node);
-    p->parent->children.back()->parent=p;
+    p->parent->children.back()->parent = p;
     return p->parent->children.back();
 }*/
 
@@ -53,43 +54,44 @@ bool Dom::isSection (const struct node * p) const
 
 void Dom::addTitle(const char *s) // Название документа
 {
-    temp=addChild(root);
-    temp->id=title;
+    temp = addChild(root);
+    temp->id = title;
     temp->value.push_back("");
     s += std::strlen("@title ");
-    while(*s!='@')
+    while(*s != '@')
     {
         temp->value.back().push_back(*s);
         ++s;
     }
-    temp=temp->parent;
+    temp = temp->parent;
 }
 
 void Dom::addSection1(const char *s) // заголовок уровня 1
 {
-    temp=addChild(root);
-    temp->id=section1;
+    temp = addChild(root);
+    temp->id = section1;
     temp->value.push_back("");
-    s+=std::strlen("@section1 ");
+    s += std::strlen("@section1 ");
 	while(*s) temp->value.back().push_back(*s), ++s;
-	delNewLineEndStr( temp->value.back());
+	delNewLineEndStr(temp->value.back());
 }
 
 void Dom::addSection2(const char *s) // заголовок уровня 2
 {
-    decltype(temp) plast=NULL; // проверка
-    for (int i=0; i< root->children.size(); ++i)
-        if (root->children[i]->id == section1) plast = root->children[i];
+    decltype(temp) plast = NULL; // проверка
+    for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
+        if (root->children[i]->id == section1)
+            plast = root->children[i];
     if (!plast)
     {
         printf ("Заголовок \"%s\" опреден как \"section2\", не может быть объявлен раньше, чем \"section1\".\n", s);
         exit(1);
     }
 
-    temp=addChild(plast);
-    temp->id=section2;
+    temp = addChild(plast);
+    temp->id = section2;
     temp->value.push_back("");
-    s+=std::strlen("@section2 ");
+    s += std::strlen("@section2 ");
 	while(*s) temp->value.back().push_back(*s), ++s;
 	delNewLineEndStr( temp->value.back());
 }
@@ -97,9 +99,9 @@ void Dom::addSection2(const char *s) // заголовок уровня 2
 void Dom::addSection3(const char *s) // заголовок уровня 3
 {
     decltype(temp) plast=NULL; // проверка
-    for (int i=0; i< root->children.size(); ++i)
+    for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
         if (root->children[i]->id == section1)
-            for (int j=0; j< root->children[i]->children.size(); ++j)
+            for (decltype(i) j=0; j < root->children[i]->children.size(); ++j)
             {
                 if (root->children[i]->children[j]->id == section2)
                     plast = root->children[i]->children[j];
@@ -111,10 +113,10 @@ void Dom::addSection3(const char *s) // заголовок уровня 3
         exit(1);
     }
 
-    temp=addChild(plast);
-    temp->id=section3;
+    temp = addChild(plast);
+    temp->id = section3;
     temp->value.push_back("");
-    s+=std::strlen("@section3 ");
+    s += std::strlen("@section3 ");
 	while(*s) temp->value.back().push_back(*s), ++s;
 	delNewLineEndStr( temp->value.back());
 }
@@ -122,11 +124,11 @@ void Dom::addSection3(const char *s) // заголовок уровня 3
 void Dom::addSection4(const char *s) // заголовок уровня 4
 {
     decltype(temp) plast=NULL; // проверка
-    for (int i=0; i< root->children.size(); ++i)
+    for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
         if (root->children[i]->id == section1)
-            for (int j=0; j< root->children[i]->children.size(); ++j)
+            for (decltype(i) j=0; j < root->children[i]->children.size(); ++j)
                 if (root->children[i]->children[j]->id == section2)
-                    for (int jj=0; jj< root->children[i]->children[j]->children.size(); ++jj)
+                    for (decltype(i) jj=0; jj < root->children[i]->children[j]->children.size(); ++jj)
                         if (root->children[i]->children[j]->children[jj]->id == section3)
                             plast = root->children[i]->children[j]->children[jj];
 
@@ -136,52 +138,52 @@ void Dom::addSection4(const char *s) // заголовок уровня 4
         exit(1);
     }
 
-    temp=addChild(plast);
-    temp->id=section4;
+    temp = addChild(plast);
+    temp->id = section4;
     temp->value.push_back("");
-    s+=std::strlen("@section4 ");
+    s += std::strlen("@section4 ");
 	while(*s) temp->value.back().push_back(*s), ++s;
 	delNewLineEndStr( temp->value.back());
 }
 
 void Dom::addToc() // Содержание
 {
-    temp=addChild(root);
-	temp->id=toc;
-	temp=temp->parent;
-	ftoc=true;
+    temp = addChild(root);
+	temp->id = toc;
+	temp = temp->parent;
+	ftoc = true;
 }
 
 /*void Dom::addImageId(const char *s) // рисунок с id
 {
-    temp=addChild(temp);
-    temp->id=image;
+    temp = addChild(temp);
+    temp->id = image;
     temp->value.push_back("text");
     temp->value.push_back(""); // подпись рисунка
     temp->value.push_back("id");
     temp->value.push_back(""); // значение id
-	while(*s!='\"') ++s; ++s; // дойти до начала подписи
-	while(*s!='\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
-	while(*s!=':') ++s; ++s;
+	while(*s! = '\"') ++s; ++s; // дойти до начала подписи
+	while(*s! = '\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
+	while(*s! = ':') ++s; ++s;
 	while (isspace(*s)) ++s;
-	while(isalpha(*s)||isdigit(*s)) temp->value[3].push_back(*s),++s;
-	temp=temp->parent;
+	while(isalpha(*s) || isdigit(*s)) temp->value[3].push_back(*s), ++s;
+	temp = temp->parent;
 }*/
 
 void Dom::addImageRef(const char *s) // рисунок с ref
 {
-    temp=addChild(temp);
-    temp->id=image;
+    temp = addChild(temp);
+    temp->id = image;
     temp->value.push_back("text");
     temp->value.push_back(""); // подпись рисунка
     temp->value.push_back("ref");
     temp->value.push_back(""); // значение ref
-	while(*s!='\"') ++s; ++s; // дойти до начала подписи
-	while(*s!='\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
-	while(*s!='\"') ++s; ++s;
+	while(*s != '\"') ++s; ++s; // дойти до начала подписи
+	while(*s != '\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
+	while(*s != '\"') ++s; ++s;
 	while (isspace(*s)) ++s;
-	while(*s!='\"') temp->value[3].push_back(*s),++s;
-	temp=temp->parent;
+	while(*s != '\"') temp->value[3].push_back(*s), ++s;
+	temp = temp->parent;
 }
 
 void Dom::addText(FILE *f, const char *name) // Текст
@@ -196,8 +198,8 @@ void Dom::addText(FILE *f, const char *name) // Текст
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
 		exit (1);
     }
-    temp=addChild(temp);
-    temp->id=text;
+    temp = addChild(temp);
+    temp->id  = text;
     temp->value.push_back("");
 
     char ch;
@@ -214,12 +216,13 @@ void Dom::addText(FILE *f, const char *name) // Текст
 		exit (1);
     }
     //std::cout<<temp->value.back()<<std::endl;
-    temp=temp->parent;
+    temp = temp->parent;
 }
 
 void Dom::delNewLineEndStr (std::string &s) const
 {
-    for(int i=s.size()-1; i >= 0; --i)
+    // удалить переходы на новую строку в конце строки
+    for(decltype(s.size()) i=s.size()-1; i >= 0; --i)
     {
         if(s[i] == 10 || s[i] == 13 || s[i] == '\n')
             s.erase(i);
