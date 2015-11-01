@@ -287,7 +287,7 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
                                     writeTextLatex(p->children[i]->value[0], buf);
                                 }
                                 else
-                                    if (p->children[i]->id == image && p->children[i]->value[2] == "ref") // рисунок, путь к файлу рисунка
+                                    if (p->children[i]->id == image) // рисунок
                                     {
                                         writeImage(p->children[i], buf);
                                     }
@@ -396,7 +396,15 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
 	}
 	fclose(fp);
 	// сформировать код вставки рисунка на LaTex
-    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{" + p->value[3] + "}}\n\\caption{" + p->value[1] + "}\n%\\label{fig:image} % ссылка\n\\end{figure}";
+	std::string scaption; // подпись к рисунку
+	// если параметр "text" в векторе value не указан (пустая строка), то подпись
+	// к рисунку не делается и рисунок в документе не нумеруется
+	if (p->value[0].size())
+	{
+	    scaption = p->value[1];
+	    scaption = "\\caption{" + headerToLaTex(scaption) + "}\n";
+	}
+    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{" + p->value[3] + "}}\n" + scaption + "%\\label{fig:image} % ссылка\n\\end{figure}";
     writeText(stemp, buf);
 }
 
@@ -637,10 +645,7 @@ void GenDoc::showErrMessage()
         }
 
         // вывод сообщений об ошибках
-        if (vErrMess.size() > 1)
-            puts("\n\nВозможные синтаксические ошибки:");
-        else
-            puts("\n\nВозможная синтаксическая ошибка:");
+        printf("\n\nВозможные синтаксическиие ошибки:\n");
 
         for (decltype(vErrMess.size()) i=0; i < vErrMess.size(); ++i) // проход сообщений
         {
@@ -655,7 +660,7 @@ void GenDoc::showErrMessage()
             if (vErrMess[i].fname.size() && vErrMess[i].line)
                 printf("\t(файл \"%s\", строка %ld)\n\n", vErrMess[i].fname.c_str(), vErrMess[i].line);
         }
-        printf ("\nНажмите <Ввод> для продолжения генерации документа...");
+        printf ("\nВсего %ld ошибок(ки)(ка)\nНажмите <Ввод> для продолжения генерации документа...", vErrMess.size());
         fflush(stdin);
         getchar();
     }
