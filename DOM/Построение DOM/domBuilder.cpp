@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cctype>
+#include <vector>
 #include "domBuilder.h"
 
 Dom::Dom()
@@ -154,23 +155,7 @@ void Dom::addToc() // Содержание
 	ftoc = true;
 }
 
-/*void Dom::addImageId(const char *s) // рисунок с id
-{
-    temp = addChild(temp);
-    temp->id = image;
-    temp->value.push_back("text");
-    temp->value.push_back(""); // подпись рисунка
-    temp->value.push_back("id");
-    temp->value.push_back(""); // значение id
-	while(*s! = '\"') ++s; ++s; // дойти до начала подписи
-	while(*s! = '\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
-	while(*s! = ':') ++s; ++s;
-	while (isspace(*s)) ++s;
-	while(isalpha(*s) || isdigit(*s)) temp->value[3].push_back(*s), ++s;
-	temp = temp->parent;
-}*/
-
-void Dom::addImageRef(const char *s) // рисунок с ref
+void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1, decltype(n1) n2) // рисунок с ref
 {
     temp = addChild(temp);
     temp->id = image;
@@ -178,11 +163,23 @@ void Dom::addImageRef(const char *s) // рисунок с ref
     temp->value.push_back(""); // подпись рисунка
     temp->value.push_back("ref");
     temp->value.push_back(""); // значение ref
-	while(*s != '\"') ++s; ++s; // дойти до начала подписи
-	while(*s != '\"') temp->value[1].push_back(*s), ++s; ++s; // записать подпись
+    while(*s != '\"') ++s; ++s; // дойти до начала подписи
+    while(*s != '\"') temp->value[n1].push_back(*s), ++s; ++s; // записать подпись
 	while(*s != '\"') ++s; ++s;
 	while (isspace(*s)) ++s;
-	while(*s != '\"') temp->value[3].push_back(*s), ++s;
+	while(*s != '\"') temp->value[n2].push_back(*s), ++s;
+	temp = temp->parent;
+}
+void Dom::addImageRef(const char *s) // рисунок с ref
+{
+    temp = addChild(temp);
+    temp->id = image;
+    temp->value.push_back("");
+    temp->value.push_back(""); // подпись рисунка
+    temp->value.push_back("ref");
+    temp->value.push_back(""); // значение ref
+    while(*s != '\"') ++s; ++s; // дойти до начала ref
+    while(*s != '\"') temp->value[3].push_back(*s), ++s; ++s; // записать ref
 	temp = temp->parent;
 }
 
