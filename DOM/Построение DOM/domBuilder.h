@@ -47,8 +47,12 @@ virtual ~Dom();
 void addText(FILE *f, const char *name); // Текст
 void addToc(); // Содержание
 void addTitle(const char *s); // Название документа
-//void addImageId(const char *s); // рисунок с id
-void addImageRef(const char *s); // рисунок с ссылкой
+
+// рисунок с подписью и путем к файлу, в параметрах индексы - индексы для вектора value,
+// куда записывать параметры (в команде могут следовать в другом порядке).
+void addImageRef(const char *s, decltype(root->children.size()) n1, decltype(n1) n2);
+// рисунок без подписи и без нумерации в документе
+void addImageRef(const char *s);
 void addSection1(const char *s); // заголовок уровня 1
 void addSection2(const char *s); // заголовок уровня 2
 void addSection3(const char *s); // заголовок уровня 3
