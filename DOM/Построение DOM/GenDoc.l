@@ -45,16 +45,18 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 
 #define	GETIMAGE {\
 	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 1, 3);\
+		 }
+
+#define	GETIMAGE2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 3, 1);\
+		 }
+
+#define	GETIMAGE3 {\
+	gen->addText(yyout, fileOut);\
 	gen->addImageRef(yytext);\
 		 }
-/*
-#define	GETIMAGEID {\
-	gen->addText(yyout, fileOut);\
-	gen->addImageId(yytext);\
-		 }
-*/
-//@image[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETIMAGEID
-//@figure[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETIMAGEID
 
 %}
 %%  
@@ -64,8 +66,12 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @section2[ \t]+[^'\n']+['\n']+			GETSECTION2
 @section3[ \t]+[^'\n']+['\n']+			GETSECTION3
 @section4[ \t]+[^'\n']+['\n']+			GETSECTION4
-@image[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
-@figure[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
+@image[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
+@figure[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
+@image[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
+@figure[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
+@figure[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
+@image[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
