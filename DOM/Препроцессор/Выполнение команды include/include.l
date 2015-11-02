@@ -15,19 +15,9 @@ static bool runIncludeRef; // равно true если в последнем в�
 
 static void getIncludeRef ();
 
-/*#define	GETINCLUDEID {\
-	char *ptr=yytext;\
-	fprintf(yyout,"Включить файл: идентификатор \"");\
-	while(*ptr!=':')++ptr;++ptr;\
-	while (isspace(*ptr))++ptr;\
-	while(isalpha(*ptr)||isdigit(*ptr))putc(*ptr, yyout),++ptr;\
-	fprintf(yyout, "\".\n");\
-		 }
-*/
-//@include[ \t]*\{[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETINCLUDEID
 %}
 %%  
-@include[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		getIncludeRef ();
+@[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		getIncludeRef ();
 %%
 int main(int argc, char *argv[])
 {
@@ -48,7 +38,7 @@ int main(int argc, char *argv[])
 		printf ("Не удалось открыть файл \"%s\"\n", fileOut);
 		return 1;
 	}
-	runIncludeRef=false;
+	runIncludeRef = false;
 
 	vlistFileName.push_back(fileIn); // записать в список файлов имя главного файла
 	yylex(); // запуск лексера
@@ -71,7 +61,7 @@ int main(int argc, char *argv[])
 
 		while(runIncludeRef) // пока не вставим содержимое всех вложенных подключаемых файлов
 		{
-			runIncludeRef=false;
+			runIncludeRef = false;
 			if (!(yyin = fopen(tName1, "rt" )))
 			{
 				printf ("Не удалось открыть файл \"%s\"\n", fileIn);
@@ -119,7 +109,7 @@ int main(int argc, char *argv[])
 
 void getIncludeRef ()
 {
-	char *ptr=yytext;
+	char *ptr = yytext;
 	while(*ptr!='\"') ++ptr; ++ptr;
 	string name("");
 	while(*ptr!='\"') name.push_back(*ptr), ++ptr; ++ptr;
@@ -141,7 +131,7 @@ void getIncludeRef ()
 		fclose(temp);	
 		if (stemp[stemp.size()-1] == 10) stemp.erase(stemp.size()-1); // удаляем символ 10
 		fputs(stemp.c_str(), yyout);
-		runIncludeRef=true;
+		runIncludeRef = true;
 		for(decltype(vlistFileName.size()) i=0; i < vlistFileName.size(); ++i) 
 		{
 			if (vlistFileName[i] == name) return; // такое имя файла уже есть в списке
