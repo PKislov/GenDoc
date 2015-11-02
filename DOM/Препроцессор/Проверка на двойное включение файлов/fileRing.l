@@ -11,20 +11,10 @@ static const char *fileIn;
 // основной объект дерева
 static FileTree *tree;
 
-/*#define	GETINCLUDEID {\
-	char *ptr=yytext;\
-	fprintf(yyout,"Включить файл: идентификатор \"");\
-	while(*ptr!=':')++ptr;++ptr;\
-	while (isspace(*ptr))++ptr;\
-	while(isalpha(*ptr)||isdigit(*ptr))putc(*ptr, yyout),++ptr;\
-	fprintf(yyout, "\".\n");\
-		 }*/
-// @include[ \t]*\{[ \t]*id[ \t]*:[ \t]*[a-zA-Z][a-zA-Z0-9]*[ \t]*\}	GETINCLUDEID
-
 static void getIncludeRef ();
 %}
 %%  
-@include[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		getIncludeRef ();
+@[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		getIncludeRef ();
 %%
 int main(int argc, char *argv[])
 {
@@ -94,9 +84,9 @@ void getIncludeRef ()
 			exit (1);
 		}
 		yylex();
-		tree->temp=tree->temp->parent;
+		tree->temp = tree->temp->parent;
 		fclose(yyin);
-		if(!(yyin=fopen(tree->getCurName(), "rt")))
+		if(!(yyin = fopen(tree->getCurName(), "rt")))
 		{
 			printf("Не удалось открыть файл \"%s\"\n", tree->getCurName());
 			exit (1);
