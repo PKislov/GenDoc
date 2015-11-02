@@ -53,7 +53,7 @@ bool Dom::isSection (const struct node * p) const
     return p->id == section1 || p->id == section2 || p->id == section3 || p->id == section4;
 }
 
-void Dom::addTitle(const char *s) // Название документа
+/*void Dom::addTitle(const char *s) // Название документа
 {
     temp = addChild(root);
     temp->id = title;
@@ -65,6 +65,61 @@ void Dom::addTitle(const char *s) // Название документа
         ++s;
     }
     temp = temp->parent;
+}*/
+
+void Dom::addTitleBegin() // начало команды @title
+{
+    static bool f = false;
+    if (f)
+    {
+        puts ("Команда \"@title\" указана более одного раза!\n");
+        exit(1);
+    }
+    f = true;
+    temp = addChild(root);
+    temp->id = titleBegin;
+    temp = temp->parent;
+}
+void Dom::addTitle() // окончание команды - @end title
+{
+    static bool f = false;
+    if (f)
+    {
+        puts ("Команда \"@end title\" указана более одного раза!\n");
+        exit(1);
+    }
+    f = true;
+    // найти в дереве начало команды @title
+    for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
+    {
+        if (root->children[i]->id == titleBegin) // нашли начало команды
+        {
+            root->children[i]->id = title;
+            root->children[i]->value.push_back(""); // под название документа
+            // если пустой заголовок
+            if(i+1 == root->children.size())
+                return;
+
+            // копирование названия документа в узел root->children[i], удаление текстовых узлов после начала команды title
+            for (decltype(root->children.size()) i1=i+1; i1 < root->children.size(); ++i1)
+            {
+
+                if(root->children[i1]->id != text)
+                {
+                    puts ("В теле команды \"@title ... @end title\" необходимо указывать только текст!\n");
+                    exit(1);
+                }
+                root->children[i]->value[0] += root->children[i1]->value[0];
+                delete root->children[i1];
+                root->children[i1] = NULL;
+                root->children.erase(root->children.begin()+i1);
+                i1 = i;
+            }
+            return;
+        }
+    }
+    puts ("Отсутствует начало команды \"@end title\"!\n");
+    exit(1);
 }
 
 void Dom::addSection1(const char *s) // заголовок уровня 1
@@ -212,7 +267,6 @@ void Dom::addText(FILE *f, const char *name) // Текст
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
 		exit (1);
     }
-    //std::cout<<temp->value.back()<<std::endl;
     temp = temp->parent;
 }
 
