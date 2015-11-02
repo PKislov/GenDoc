@@ -10,6 +10,7 @@ protected:
 // типы узлов
 const std::string document = "document"; // корень дерева, узел генерируется конструктором, нужен формально
 const std::string title = "title"; // заголовок документа
+const std::string titleBegin = "titlebegin";
 const std::string toc = "toc"; // содержание (оглавление)
 const std::string section1 = "section1";
 const std::string section2 = "section2";
@@ -46,7 +47,9 @@ virtual ~Dom();
 // добавление элементов в дерево (методы для лексера):
 void addText(FILE *f, const char *name); // Текст
 void addToc(); // Содержание
-void addTitle(const char *s); // Название документа
+// void addTitle(const char *s); // Название документа
+void addTitleBegin(); // начало команды @title
+void addTitle(); // окончание команды - @end title
 
 // рисунок с подписью и путем к файлу, в параметрах индексы - индексы для вектора value,
 // куда записывать параметры (в команде могут следовать в другом порядке).
