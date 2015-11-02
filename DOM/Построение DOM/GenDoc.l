@@ -12,10 +12,15 @@ static GenDoc *gen;
 static const char *fileIn;
 static const char * const fileOut = "temp.tmp"; // временный файл, нельзя получать библиотечной функцией, т.к. постоянно происходит открытие/закрытие файла
 
-#define GETTITLE {\
+#define GETTITLEBEGIN {\
 	gen->addText(yyout, fileOut);/*записать в дерево фрагмент текста перед командой*/\
 	/*После выполнения каждой команды содержимое вых. файла затирается*/\
-	gen->addTitle(yytext);\
+	gen->addTitleBegin();\
+		 }
+// конструкция @title ... @end title разбита на три части и заносится в DOM отдельно (начало команды, текст названия и окончание команды)
+#define GETTITLEEND {\
+	gen->addText(yyout, fileOut);\
+	gen->addTitle();\
 		 }
 
 #define GETTOC	{\
@@ -57,21 +62,22 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addText(yyout, fileOut);\
 	gen->addImageRef(yytext);\
 		 }
-
+// @[T|t][I|i][T|t][L|l][E|e][ \t]+[^@]+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLE
 %}
 %%  
-@title[ \t]+[^"@"]+@end[ \t]+title		GETTITLE
-@toc[ \t]*['\n']*				GETTOC
-@section1[ \t]+[^'\n']+['\n']+			GETSECTION1
-@section2[ \t]+[^'\n']+['\n']+			GETSECTION2
-@section3[ \t]+[^'\n']+['\n']+			GETSECTION3
-@section4[ \t]+[^'\n']+['\n']+			GETSECTION4
-@image[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
-@figure[ \t]*\{[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
-@image[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
-@figure[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*text[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
-@figure[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
-@image[ \t]*\{[ \t]*ref[ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
+@[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
+[ \t\n]+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLEEND
+@[T|t][O|o][C|c][ \t]*['\n']*				GETTOC
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]+[^'\n']+['\n']+			GETSECTION1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]+[^'\n']+['\n']+			GETSECTION2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]+[^'\n']+['\n']+			GETSECTION3
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]+[^'\n']+['\n']+			GETSECTION4
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -81,6 +87,10 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
+//##################################################
+//############## ОТЛАДКА ###########################
+argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
+//##################################################
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
@@ -162,7 +172,7 @@ int main(int argc, char *argv[])
 		if (gen->getToc() && format == "pdf") // если указана команда toc (содержание), то дважды запустить программу pdflatex, иначе содержание в pdf не отобразится если команда toc в начале файла
 		{
 			gen->genForm(result, true, format); // запуск генератора документа
-			gen->genForm(result, true, format); // false - не запускать поиск синтакс. ошибок
+			gen->genForm(result, false, format); // false - не запускать поиск синтакс. ошибок
 			remove((result + ".toc").c_str()); // удалить временный файл .toc
 		}
 		else
