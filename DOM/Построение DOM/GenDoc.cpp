@@ -476,8 +476,16 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
     {
         if (!p || !p->children.size()) return; // если пустрое дерево
 
+        std::string stempLowReg; // команда в нижнем регистре
+
         for (decltype(p->children.size()) i=0; i < p->children.size(); ++i) // цикл прохода дерева
         {
+            // начало команды @title
+            if(p->children[i]->id == titleBegin)
+            {
+                puts ("Отсутствует окончание команды \"@title ... @end title\"!\n");
+                exit(1);
+            }
             if (p->children[i]->id == text) // искать ошибки в тексте
             {
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
@@ -486,8 +494,12 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                     // проход вектора с командами, ищем вхождения команд в тексте (stemp)
                     for (decltype(vcommands.size()) i2=0; i2 < vcommands.size(); ++i2)
                     {
+                        stempLowReg = ""; // перевести команду в нижний регистр
+                        for(decltype(stemp.size()) i3=0; i3 < vcommands[i2].size(); ++i3)
+                            stempLowReg.push_back(std::tolower(stemp[i1+i3]));
+
                         // подстрока найдена, значит есть синтакс. ошибка
-                        if (!stemp.compare(i1, vcommands[i2].size(), vcommands[i2]))
+                        if (stempLowReg == vcommands[i2])
                         {
                             //индекс конца некорр. команды в stemp
                             decltype(stemp.size()) endc;
@@ -581,11 +593,11 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                                             for (decltype(vErrMess.size()) i5=0; i5 < vErrMess.size(); ++i5)
                                                             {
                                                                 // если в векторе сообщений найден дубликат сообщения об ошибке
-                                                                if (!vErrMess[i5].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i5].fname == vInclFiles[i4].name && vErrMess[i5].title == (isSection(p) ? p->value[0] : "") && vErrMess[i5].line == countLine)
+                                                                if (!vErrMess[i5].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i5].fname == vInclFiles[i4].name && /*vErrMess[i5].title == (isSection(p) ? p->value[0] : "") &&*/ vErrMess[i5].line == countLine)
                                                                     goto met1; // не записывать ошибку в список
                                                             }
-                                                            // в список сообщений ошибок записать данные
-                                                            vErrMess.push_back({"", vInclFiles[i4].name, (isSection(p) ? p->value[0] : ""), countLine});
+                                                            // в список сообщений ошибок записать данные, заносим заголовок только если ошибка в корневом файле
+                                                            vErrMess.push_back({"", vInclFiles[i4].name, isSection(p) && !i4 ? p->value[0] : "", countLine});
                                                             // в массив сообщений ошибок скопировать текст некорректной команды
                                                             vErrMess[vErrMess.size()-1].commande.insert(0, stemp, i1, lengc);
                                                             met1:;
