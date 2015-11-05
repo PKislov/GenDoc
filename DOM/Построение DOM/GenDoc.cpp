@@ -15,7 +15,7 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
     std::string templ = "templateForm.tex"; // имя файла шаблона
     FILE *fres; // результат в LaTeX
     FILE *ftempl; // шаблон
-    remove(result.c_str());
+    //remove(result.c_str());
 
     // поиск синтаксических ошибок в DOM
     if (findErrSyntax)
@@ -94,6 +94,12 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
 			{
 			    // сформировать команду
                 templBuf = "pdflatex " + result;
+				if (std::system(templBuf.c_str()))// перевести в Pdf
+				{
+				    puts("Ошибка приложения TexLive!");
+                    exit(1);
+				}
+				// дважды запустить программу pdflatex, иначе оглавление и ссылки не отобразятся
 				if (std::system(templBuf.c_str()))// перевести в Pdf
 				{
 				    puts("Ошибка приложения TexLive!");
@@ -246,51 +252,56 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
     return true;
 }
 
-void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
+void GenDoc::makeBuff (const decltype(root) p, std::string &buf)
 {
     if (!p || !p->children.size()) return; // если пустрое дерево
+
+    // массив указателей на методы writeSection
+    void (GenDoc::*pfaddSec[])(const std::string &, std::string &, const std::string &,  const bool) const = {&GenDoc::writeSection1, &GenDoc::writeSection2, &GenDoc::writeSection3, &GenDoc::writeSection4};
+
     for (decltype(p->children.size()) i=0; i < p->children.size(); ++i) // цикл прохода дерева
     {
+        if (isSectionBegin(p->children[i]))
+        {
+            sectionBegToSection(p->children[i]->id); // меняем id на section
+        }
+
         //puts(p->children[i]->id.c_str());
         if (p->children[i]->id == title)
         {
             writeTitle(p->children[i]->value[0], buf); // заполняет в шаблоне заголовок документа (title)
         }
-        else
-            if (p->children[i]->id == toc)
+        else // начало команды @title
+            if(p->children[i]->id == titleBegin)
             {
-                writeText("\\tableofcontents\n\\newpage\n", buf);
+                puts ("Отсутствует окончание команды \"@title ... @end title\"!\n");
+                exit(1);
             }
             else
-                if (p->children[i]->id == section1)
+                if (p->children[i]->id == toc)
                 {
-                    writeSection1(p->children[i]->value[0], buf);
+                    writeText("\\tableofcontents\n\\newpage\n", buf);
                 }
                 else
-                    if (p->children[i]->id == section2)
+                    if (isSection(p->children[i]))
                     {
-                        writeSection2(p->children[i]->value[0], buf);
+                        (this->*(pfaddSec[p->children[i]->id[p->children[i]->id.size()-1]-'0'-1]))(p->children[i]->value[1], buf, p->children[i]->value[3], p->children[i]->value[2] == "id");
                     }
                     else
-                        if (p->children[i]->id == section3)
+                        if (p->children[i]->id == text)
                         {
-                            writeSection3(p->children[i]->value[0], buf);
+                            writeTextLatex(p->children[i]->value[0], buf);
                         }
                         else
-                            if (p->children[i]->id == section4)
+                            if (p->children[i]->id == image) // рисунок
                             {
-                                writeSection4(p->children[i]->value[0], buf);
+                                writeImage(p->children[i], buf);
                             }
                             else
-                                if (p->children[i]->id == text)
+                                if (p->children[i]->id == idRef) // ссылкa - команда &... {id:"..."}
                                 {
-                                    writeTextLatex(p->children[i]->value[0], buf);
+                                    writeId(p->children[i], buf);
                                 }
-                                else
-                                    if (p->children[i]->id == image) // рисунок
-                                    {
-                                        writeImage(p->children[i], buf);
-                                    }
 
 		if (p->children[i]->children.size())
         {
@@ -302,13 +313,6 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf) const
 // заполняет в шаблоне (в строке buf) заголовок документа (title, в строке t)
 void GenDoc::writeTitle (const std::string &t, std::string &buf) const
 {
-    /*static bool f = false;
-    if (f)
-    {
-        printf ("Команда \"@title\" была вызвана ранее, значение \"%s\" не будет указано.\n", t.c_str());
-        return;
-    }
-    f = true;*/
     const std::string comm = "\\title{}"; // найти в buf вхождение этой команды, и вставить между скобок заголовок из t
     for (decltype(buf.size()) i=0; i < buf.size() - comm.size() + 1; i++)
     {
@@ -320,25 +324,25 @@ void GenDoc::writeTitle (const std::string &t, std::string &buf) const
         }
     }
 }
-void GenDoc::writeSection1 (const std::string &t, std::string &buf) const
+void GenDoc::writeSection1 (const std::string &t, std::string &buf, const std::string &id, const bool f) const
 {
-    std::string stemp = t;
-    writeText(std::string("\\chapter {") + headerToLaTex(stemp) + "}\n", buf);
+    std::string stemp = t, label = id; // копии создать чтоб не изменять исходные данные методом headerToLaTex
+    writeText(std::string("\\chapter {") + headerToLaTex(stemp) + "}" + (f ? "\\label{" + headerToLaTex(label) + "}" : "") + "\n", buf);
 }
-void GenDoc::writeSection2 (const std::string &t, std::string &buf) const
+void GenDoc::writeSection2 (const std::string &t, std::string &buf, const std::string &id, const bool f) const
 {
-    std::string stemp = t;
-    writeText(std::string("\\section {") + headerToLaTex(stemp) + "}\n", buf);
+    std::string stemp = t, label = id;
+    writeText(std::string("\\section {") + headerToLaTex(stemp) + "}" + (f ? "\\label{" + headerToLaTex(label) + "}" : "") + "\n", buf);
 }
-void GenDoc::writeSection3 (const std::string &t, std::string &buf) const
+void GenDoc::writeSection3 (const std::string &t, std::string &buf, const std::string &id, const bool f) const
 {
-    std::string stemp = t;
-    writeText(std::string("\\subsection {") + headerToLaTex(stemp) + "}\n", buf);
+    std::string stemp = t, label = id;
+    writeText(std::string("\\subsection {") + headerToLaTex(stemp) + "}" + (f ? "\\label{" + headerToLaTex(label) + "}" : "") + "\n", buf);
 }
-void GenDoc::writeSection4 (const std::string &t, std::string &buf) const
+void GenDoc::writeSection4 (const std::string &t, std::string &buf, const std::string &id, const bool f) const
 {
-    std::string stemp = t;
-    writeText(std::string("\\subsubsection {") + headerToLaTex(stemp) + "}\n", buf);
+    std::string stemp = t, label = id;
+    writeText(std::string("\\subsubsection {") + headerToLaTex(stemp) + "}" + (f ? "\\label{" + headerToLaTex(label) + "}" : "") + "\n", buf);
 }
 
 // метод возвращает индекс перед выражением "\end{document}" в строке buf, используется для определения места вставки текста
@@ -375,7 +379,7 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
     {
         ++j;
         stemp.insert(0, p->value[3], j, p->value[3].size()-j); // вставить расширение имени файла в строку stemp
-        if (stemp != "pdf" && stemp != "png" && stemp != "jpg" && stemp !="jpeg") // если расширение не .pdf, .png, .jpg, .jpeg
+        if (stemp != "pdf" && stemp != "png" && stemp != "jpg" && stemp != "jpeg") // если расширение не .pdf, .png, .jpg, .jpeg
         {
             printf("Формат рисунка \"%s\" не поддерживается программой!\n", p->value[3].c_str());
             exit(1);
@@ -480,13 +484,12 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
 
         for (decltype(p->children.size()) i=0; i < p->children.size(); ++i) // цикл прохода дерева
         {
-            // начало команды @title
-            if(p->children[i]->id == titleBegin)
+            if(p->children[i]->id == titleBegin) // найти место ошибки
             {
-                puts ("Отсутствует окончание команды \"@title ... @end title\"!\n");
-                exit(1);
+                puts ("Отсутствует окончание команды \"@title ... @end title\"!");
             }
-            if (p->children[i]->id == text) // искать ошибки в тексте
+            // искать ошибки в тексте
+            if (p->children[i]->id == text || p->children[i]->id == titleBegin)
             {
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
                 for (decltype(stemp.size()) i1=0; i1 < stemp.size(); ++i1) // поиск подстрок в тексте
@@ -501,7 +504,7 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                         // подстрока найдена, значит есть синтакс. ошибка
                         if (stempLowReg == vcommands[i2])
                         {
-                            //индекс конца некорр. команды в stemp
+                             //индекс конца некорр. команды в stemp
                             decltype(stemp.size()) endc;
                             //длина некорр. команды
                             decltype(stemp.size()) lengc;
@@ -509,7 +512,7 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                             endc = i1 + vcommands[i2].size();
                             // некорр. команда должна оканчиваться '\n' и быть не длиннее 150 знаков
                             for (int i3=0; i3 < 150 && stemp[endc] != '\n' && endc < stemp.size(); ++i3, ++endc);
-                            lengc = endc - i1 + 1; // найти длину некорр. команды
+                            lengc = endc - i1 /*+ 1*/; // найти длину некорр. команды
 
                             // вывод сообщения о возможной синтакс. ошибке
                             if(!bflist) // если нет доступа к файлу со списком подключаемых файлов
@@ -518,11 +521,11 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                 for (decltype(vErrMess.size()) i3=0; i3 < vErrMess.size(); ++i3)
                                 {
                                     // если в векторе сообщений найден дубликат сообщения об ошибке
-                                    if (!vErrMess[i3].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i3].fname == "" && vErrMess[i3].title == (isSection(p) ? p->value[0] : "") && !vErrMess[i3].line)
+                                    if (!vErrMess[i3].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i3].fname == "" && vErrMess[i3].title == (isSection(p) ? p->value[1] : "") && !vErrMess[i3].line)
                                         goto met2; // не записывать ошибку в список
                                 }
                                 // в список сообщений ошибок записать данные
-                                vErrMess.push_back({"", "", (isSection(p) ? p->value[0] : ""), 0});
+                                vErrMess.push_back({"", "", (isSection(p) ? p->value[1] : ""), 0});
                                 // в массив сообщений ошибок скопировать текст некорректной команды
                                 vErrMess[vErrMess.size()-1].commande.insert(0, stemp, i1, lengc);
                                 // в сообщении имя файла и номер строки обнулены
@@ -541,7 +544,7 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                         for(decltype(vInclFiles.size()) i3=0; !(feof(flist)); ++i3)
                                         {
                                             vInclFiles.push_back({"", ""});
-                                            while(!(feof(flist)))
+                                            while(!feof(flist))
                                             {
                                                 ch = fgetc(flist);
                                                 if (ch == '\n') break; // имена оканчиваются новой строкой
@@ -571,11 +574,6 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                     {
                                         if (vInclFiles[i4].text.size()) // поиск подстроки
                                             {
-                                                // найти индекс конца некорр. команды в DOM
-                                                endc = i1 + vcommands[i2].size();
-                                                // некорр. команда должна оканчиваться '\n' и быть не длиннее 150 знаков
-                                                for (int i3=0; i3 < 150 && stemp[endc] != '\n' && endc < stemp.size(); ++i3, ++endc);
-                                                lengc = endc - i1 + 1; // найти длину некорр. команды
                                                 // если содержимое файла длиннее либо равно длине фрагмента команды, то искать вхождение некорр. команды
                                                 if (vInclFiles[i4].text.size() >= lengc)
                                                 {
@@ -593,11 +591,11 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                                             for (decltype(vErrMess.size()) i5=0; i5 < vErrMess.size(); ++i5)
                                                             {
                                                                 // если в векторе сообщений найден дубликат сообщения об ошибке
-                                                                if (!vErrMess[i5].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i5].fname == vInclFiles[i4].name && /*vErrMess[i5].title == (isSection(p) ? p->value[0] : "") &&*/ vErrMess[i5].line == countLine)
+                                                                if (!vErrMess[i5].commande.compare(0, lengc, stemp, i1, lengc) && vErrMess[i5].fname == vInclFiles[i4].name && /*vErrMess[i5].title == (isSection(p) ? p->value[1] : "") &&*/ vErrMess[i5].line == countLine)
                                                                     goto met1; // не записывать ошибку в список
                                                             }
                                                             // в список сообщений ошибок записать данные, заносим заголовок только если ошибка в корневом файле
-                                                            vErrMess.push_back({"", vInclFiles[i4].name, isSection(p) && !i4 ? p->value[0] : "", countLine});
+                                                            vErrMess.push_back({"", vInclFiles[i4].name, isSection(p) && !i4 ? p->value[1] : "", countLine});
                                                             // в массив сообщений ошибок скопировать текст некорректной команды
                                                             vErrMess[vErrMess.size()-1].commande.insert(0, stemp, i1, lengc);
                                                             met1:;
@@ -670,10 +668,55 @@ void GenDoc::showErrMessage()
             printf("%s", vErrMess[i].commande.c_str());
             // вывод имени файла и номера строки, где содержится некорр. команда
             if (vErrMess[i].fname.size() && vErrMess[i].line)
-                printf("\t(файл \"%s\", строка %ld)\n\n", vErrMess[i].fname.c_str(), vErrMess[i].line);
+                printf("\n\t(файл \"%s\", строка %ld)\n\n", vErrMess[i].fname.c_str(), vErrMess[i].line);
         }
         printf ("\nВсего %ld ошибок(ки)(ка)\nНажмите <Ввод> для продолжения генерации документа...", vErrMess.size());
         fflush(stdin);
         getchar();
+    }
+}
+
+// заполняет в шаблоне (в строке buf) ссылку - команда &... {id:"..."}
+void GenDoc::writeId (const decltype(root) p, std::string &buf) const
+{
+    const struct node *pfind = findIdInDom(root, p->value[1]); // поиск ссылки в DOM
+
+    if (!pfind)
+    {
+        printf ("Необъявленная ссылка \"%s\"  в выражении \"%s\"!\n", p->value[1].c_str(), p->value[3].c_str());
+        printf("Игнорировать [Y/N] ?");
+        if (!getAnswer()) // ответ N
+            exit(1);
+    }
+    else
+        if(pfind->id != p->value[5]) // если типы ссылок не совпадают
+        {
+            // индекс выражения yytext в найденном узле (зависит от типа узла)
+            auto indexYYtextRes = getIndexYytext(pfind);
+            printf ("Ссылка \"%s\"  в выражении \"%s\" по типу не соответствует объявленной в выражении \"%s\"!\n", p->value[1].c_str(), p->value[3].c_str(), pfind->value[indexYYtextRes].c_str());
+            exit(1);
+        }
+        std::string stemp = p->value[1];
+        headerToLaTex(stemp);
+        writeText("\\ref{" + stemp + "}", buf);
+}
+
+// возвращает ответ на вопрос вида Y/N
+bool GenDoc::getAnswer() const
+{
+    char ch;
+    met1: fflush(stdin);
+    ch = getchar();
+    switch(std::tolower(ch))
+    {
+    case 'y':
+        return true;
+        break;
+    case 'n':
+        return false;
+        break;
+    default:
+        goto met1;
+        break;
     }
 }
