@@ -15,7 +15,7 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 #define GETTITLEBEGIN {\
 	gen->addText(yyout, fileOut);/*записать в дерево фрагмент текста перед командой*/\
 	/*После выполнения каждой команды содержимое вых. файла затирается*/\
-	gen->addTitleBegin();\
+	gen->addTitleBegin(yytext);\
 		 }
 // конструкция @title ... @end title разбита на три части и заносится в DOM отдельно (начало команды, текст названия и окончание команды)
 #define GETTITLEEND {\
@@ -28,25 +28,78 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addToc();\
 		}
 
-#define	GETSECTION1 {\
+#define	GETSECTION1BEGIN {\
 	gen->addText(yyout, fileOut);\
-	gen->addSection1(yytext);\
+	gen->addSection1Begin(yytext);\
 		 }
 
-#define	GETSECTION2 {\
+#define	GETSECTION2BEGIN {\
 	gen->addText(yyout, fileOut);\
-	gen->addSection2(yytext);\
+	gen->addSection2Begin(yytext);\
 		 }
 
-#define	GETSECTION3 {\
+#define	GETSECTION3BEGIN {\
 	gen->addText(yyout, fileOut);\
-	gen->addSection3(yytext);\
+	gen->addSection3Begin(yytext);\
 		 }
 
-#define	GETSECTION4 {\
+#define	GETSECTION4BEGIN {\
 	gen->addText(yyout, fileOut);\
-	gen->addSection4(yytext);\
+	gen->addSection4Begin(yytext);\
 		 }
+
+#define	GETSECTION1_1PARAM {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_1Param(yytext, "section1");\
+		 }
+#define	GETSECTION2_1PARAM {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_1Param(yytext, "section2");\
+		 }
+#define	GETSECTION3_1PARAM {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_1Param(yytext, "section3");\
+		 }
+#define	GETSECTION4_1PARAM {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_1Param(yytext, "section4");\
+		 }
+#define	GETSECTION1_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section1", 3);\
+		 }
+#define	GETSECTION2_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section2", 3);\
+		 }
+#define	GETSECTION3_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section3", 3);\
+		 }
+#define	GETSECTION4_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section4", 3);\
+		 }
+
+
+#define	GETSECTION1_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section1", 1);\
+		 }
+#define	GETSECTION2_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section2", 1);\
+		 }
+#define	GETSECTION3_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section3", 1);\
+		 }
+#define	GETSECTION4_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addSection_2Param(yytext, "section4", 1);\
+		 }
+
+
 
 #define	GETIMAGE {\
 	gen->addText(yyout, fileOut);\
@@ -62,22 +115,55 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addText(yyout, fileOut);\
 	gen->addImageRef(yytext);\
 		 }
-// @[T|t][I|i][T|t][L|l][E|e][ \t]+[^@]+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLE
+
+#define	GETIDSECTION1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "section1");\
+		 }
+#define	GETIDSECTION2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "section2");\
+		 }
+#define	GETIDSECTION3 {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "section3");\
+		 }
+#define	GETIDSECTION4 {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "section4");\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
 [ \t\n]+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLEEND
-@[T|t][O|o][C|c][ \t]*['\n']*				GETTOC
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]+[^'\n']+['\n']+			GETSECTION1
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]+[^'\n']+['\n']+			GETSECTION2
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]+[^'\n']+['\n']+			GETSECTION3
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]+[^'\n']+['\n']+			GETSECTION4
+@[T|t][O|o][C|c][ \t]*['\n']*					GETTOC
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION1_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION2_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION3_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION4_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION1_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION2_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION3_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION4_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION1_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION2_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION3_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION4_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]+			GETSECTION1BEGIN
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]+			GETSECTION2BEGIN
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]+			GETSECTION3BEGIN
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]+			GETSECTION4BEGIN
 @[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
 @[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
 @[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
 @[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
 @[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
 @[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION1
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION2
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION3
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION4
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -87,10 +173,7 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
-//##################################################
-//############## ОТЛАДКА ###########################
-argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
-//##################################################
+
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
@@ -118,9 +201,45 @@ argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 	fileIn = fSrcIncl;
 
 
+
+
+// В файле fSrcIncl заменим последовательности символов \" на \a, a - bell
+	FILE *ftemp1;
+	stemp.clear();	// буфер файла
+	if(!(ftemp1 = fopen(fSrcIncl, "r+b" )))
+	{
+		printf ("Не удалось открыть временный файл \"%s\"\n", fSrcIncl);
+		return 1;
+	}
+	char ch;
+	while(!feof(ftemp1))
+	{
+		ch=getc(ftemp1);
+		if(!feof(ftemp1))
+		{
+			stemp.push_back (ch);
+			if (stemp.size() == 2)
+			{
+				if (stemp == "\\\"")
+				{
+					fseek(ftemp1, -1, SEEK_CUR);
+					putc('\a', ftemp1);				
+				}
+				stemp[0] = stemp[1];
+				stemp.pop_back();
+			}
+		}
+	}
+	fclose(ftemp1);
+
+
+
+
+
+
 	if(!(yyin = fopen(fileIn, "rt" )))
 	{
-		printf ("Не удалось открыть файл \"%s\"\n", fileIn);
+		printf ("Не удалось открыть временный файл \"%s\"\n", fileIn);
 		return 1;
 	}
 
@@ -168,17 +287,9 @@ argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 			format = "pdf"; // формат по умолчанию
 
 	if (type == "form") // формуляр
-	{		
-		if (gen->getToc() && format == "pdf") // если указана команда toc (содержание), то дважды запустить программу pdflatex, иначе содержание в pdf не отобразится если команда toc в начале файла
-		{
-			gen->genForm(result, true, format); // запуск генератора документа
-			gen->genForm(result, false, format); // false - не запускать поиск синтакс. ошибок
-			remove((result + ".toc").c_str()); // удалить временный файл .toc
-		}
-		else
-			{
-				gen->genForm(result, true, format);
-			}
+	{	
+		gen->genForm(result, true, format); // запуск генератора документа
+		remove((result + ".toc").c_str()); // удалить временный файл .toc
 
 		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
 		if (format == "tex" || format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
