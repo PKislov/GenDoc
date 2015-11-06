@@ -302,6 +302,11 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf)
                                 {
                                     writeId(p->children[i], buf);
                                 }
+                                else
+                                    if (p->children[i]->id == pageid)
+                                    {
+                                        writePageId(p->children[i], buf);
+                                    }
 
 		if (p->children[i]->children.size())
         {
@@ -408,7 +413,15 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
 	    scaption = p->value[1];
 	    scaption = "\\caption{" + headerToLaTex(scaption) + "}\n";
 	}
-    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{" + p->value[3] + "}}\n" + scaption + "%\\label{fig:image} % ссылка\n\\end{figure}";
+
+	std::string label; // ссылка к рисунку
+	if (p->value.size() >= 8) // если указана ссылка
+	{
+        label = p->value[5];
+        label = "\\label{" + headerToLaTex(label) + "}";
+	}
+
+    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{" + p->value[3] + "}}\n" + scaption + label + "\n\\end{figure}";
     writeText(stemp, buf);
 }
 
@@ -566,7 +579,18 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                                 	vInclFiles[i3].text.push_back(ch);
                                             }
                                             fclose(ftemp);
+                                            // в содержимом файла заменить последовательности символов \" на " т.к. в тексте в DOM уже заменено
+                                            if (vInclFiles[i3].text.size() >= 2)
+                                            {
+                                                // проход содержимого файла
+                                                for(decltype(vInclFiles[i3].text.size()) i4=0; i4 < vInclFiles[i3].text.size()-1; ++i4)
+                                                {
+                                                    if(vInclFiles[i3].text[i4] == '\\' && vInclFiles[i3].text[i4+1] == '\"')
+                                                        vInclFiles[i3].text.erase(i4, 1); // удалить "\"
+                                                }
+                                            }
                                         }
+
                                     } // if (vInclFiles.empty())
 
                                     // найти, в каком файле, в какой строке содержится ошибочная команда
@@ -686,7 +710,10 @@ void GenDoc::writeId (const decltype(root) p, std::string &buf) const
         printf ("Необъявленная ссылка \"%s\"  в выражении \"%s\"!\n", p->value[1].c_str(), p->value[3].c_str());
         printf("Игнорировать [Y/N] ?");
         if (!getAnswer()) // ответ N
+        {
+            puts("\nГенерация документа прервана.");
             exit(1);
+        }
     }
     else
         if(pfind->id != p->value[5]) // если типы ссылок не совпадают
@@ -698,7 +725,8 @@ void GenDoc::writeId (const decltype(root) p, std::string &buf) const
         }
         std::string stemp = p->value[1];
         headerToLaTex(stemp);
-        writeText("\\ref{" + stemp + "}", buf);
+        // команда на номер странцы - "\pageref"{...}, на остальные ресурсы - "\ref"{...}
+        writeText("\\" + std::string(p->value[5] == "pageid" ? "page" : "") + "ref{" + stemp + "}", buf);
 }
 
 // возвращает ответ на вопрос вида Y/N
@@ -719,4 +747,12 @@ bool GenDoc::getAnswer() const
         goto met1;
         break;
     }
+}
+
+// создать ссылку на страницу - команда @pageid	{id:" ... "}
+void GenDoc::writePageId(const decltype(root) p, std::string &buf)
+{
+    std::string stemp = p->value[1];
+    headerToLaTex(stemp);
+    writeText("\\label{" + stemp + "}", buf);
 }
