@@ -241,7 +241,7 @@ void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root
         printf("В команде описания заголовка \"%s\" нельзя использовать двойные переходы на новую строку!\n", sbegin);
         exit(1);
     }
-    temp->value[2] = "id";
+    temp->value[2] = idRef;
     if (!temp->value[3].size())
     {
         printf("В команде описания заголовка \"%s\" нельзя использовать пустое значение ссылки!\n", sbegin);
@@ -253,6 +253,8 @@ void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root
     // замена в строке последовательности символов "\\a" на "\""
     SeqSymbContrReplace(temp->value.back());
 
+    // ищет в DOM ссылку, содержащуюся в узле р (метод findIdInDom) и выводит сообщение об ошибке,
+    // если ссылка уже объявлена
     showDuplicateIdInDom(temp);
 
 }
@@ -264,35 +266,62 @@ void Dom::addToc() // Содержание
 	temp = temp->parent;
 }
 
-void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1, decltype(n1) n2) // рисунок с ref
+
+// команда вида @image{text:" ... "; ref:" ... "; id:" ... "}
+void Dom::addImageRef(const char *s, decltype(root->children.size()) n1, decltype(n1) n2, decltype(n1) n3)
 {
-    temp = addChild(temp);
-    temp->id = image;
-    temp->value.push_back("text");
-    temp->value.push_back(""); // подпись рисунка
-    temp->value.push_back("ref");
-    temp->value.push_back(""); // значение ref
-    temp->value.push_back(""); // параметр id
-    temp->value.push_back(""); // значение id
-    while(*s != '\"') ++s; ++s; // дойти до начала подписи
-    while(*s != '\"') temp->value[n1].push_back(*s), ++s; ++s; // записать подпись
+    const char * const sbegin = s; // переменная для поиска ошибок
+    addImageRef(s, n1, n2);
+    temp = temp->children.back(); // вернуться к текущему узлу
+    temp->value[4] = idRef;
+    temp->value.push_back("yylex"); // параметр yylex
+    temp->value.push_back(sbegin); // значение yylex - строка команды от лексера (нужна для поиска повторов ссылок)
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value[n1]);
-	while(*s != '\"') ++s; ++s;
-	while (isspace(*s)) ++s;
-	while(*s != '\"') temp->value[n2].push_back(*s), ++s;
-	// замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value[n2]);
-	// поиск в параметрах двойных переходов на новую строку
-	if ((temp->value[1].find("\n\n", 0) != std::string::npos) || (temp->value[3].find("\n\n", 0) != std::string::npos))
+    SeqSymbContrReplace(temp->value.back());
+
+    while(*s != '\"') ++s; ++s; // пропустить первый параметр
+    while(*s != '\"') ++s; ++s;
+    while(*s != '\"') ++s; ++s;
+    while(*s != '\"') ++s; ++s;
+    while(*s != '\"') ++s; ++s; // дойти до начала третьего параметра
+    while(*s != '\"') temp->value[n3].push_back(*s), ++s; // записать параметр
+    SeqSymbContrReplace(temp->value[n3]);
+    if (temp->value[n3].find("\n\n", 0) != std::string::npos)
     {
-        puts("В команде описания рисунка нельзя использовать двойные переходы на новую строку!");
+        printf("В команде описания рисунка \"%s\" нельзя использовать двойные переходы на новую строку!", sbegin);
         exit(1);
     }
-	temp = temp->parent;
+    // ищет в DOM ссылку, содержащуюся в узле р (метод findIdInDom) и выводит сообщение об ошибке,
+    // если ссылка уже объявлена
+    showDuplicateIdInDom(temp);
+    temp = temp->parent;
 }
-void Dom::addImageRef(const char *s) // рисунок с ref
+
+// команда вида @image{text:" ... "; ref:" ... "}
+// n - индекс элемента массива value
+void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1, decltype(n1) n2)
 {
+    const char * const sbegin = s; // переменная для поиска ошибок
+    addImageRef(s, n1);
+    temp = temp->children.back(); // вернуться к текущему узлу
+    temp->value[0] = text;
+    while(*s != '\"') ++s; ++s; // пропустить первый параметр
+    while(*s != '\"') ++s; ++s;
+    while(*s != '\"') ++s; ++s; // дойти до начала второго параметра
+    while(*s != '\"') temp->value[n2].push_back(*s), ++s; // записать параметр
+    SeqSymbContrReplace(temp->value[n2]);
+    if (temp->value[n2].find("\n\n", 0) != std::string::npos)
+    {
+        printf("В команде описания рисунка \"%s\" нельзя использовать двойные переходы на новую строку!", sbegin);
+        exit(1);
+    }
+    temp = temp->parent;
+}
+
+// команда вида @image{ref:" ... "}
+void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1) // рисунок с ref
+{
+    const char * const sbegin = s; // переменная для поиска ошибок
     temp = addChild(temp);
     temp->id = image;
     temp->value.push_back("");
@@ -302,9 +331,14 @@ void Dom::addImageRef(const char *s) // рисунок с ref
     temp->value.push_back(""); // параметр id
     temp->value.push_back(""); // значение id
     while(*s != '\"') ++s; ++s; // дойти до начала ref
-    while(*s != '\"') temp->value[3].push_back(*s), ++s; ++s; // записать ref
+    while(*s != '\"') temp->value[n1].push_back(*s), ++s; ++s; // записать ref
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value[3]);
+    SeqSymbContrReplace(temp->value[n1]);
+    if (temp->value[n1].find("\n\n", 0) != std::string::npos)
+    {
+        printf("В команде описания рисунка \"%s\" нельзя использовать двойные переходы на новую строку!", sbegin);
+        exit(1);
+    }
 	temp = temp->parent;
 }
 
@@ -398,15 +432,11 @@ bool Dom::showDuplicateIdInDom (const struct node *p) const
     {
         // индекс выражения yytext в найденном узле (зависит от типа узла)
         auto indexYYtextRes = getIndexYytext(pfind);
-        /*if (!indexYYtextRes)
-            return false;*/
 
         // индекс выражения yytext в узле p (зависит от типа узла)
         auto indexYYtextP = getIndexYytext(p);
-       /* if (!indexYYtextP)
-            return false;*/
 
-        printf ("Ссылка \"%s\", указанная в выражении \"%s\", уже была указана в выражении \"%s\"!\n", p->value[indexIdp].c_str(), p->value[indexYYtextP].c_str(), pfind->value[indexYYtextRes].c_str());
+        printf ("Ссылка \"%s\", указанная в выражении \"%s\", уже была объявлена в выражении \"%s\"!\n", p->value[indexIdp].c_str(), p->value[indexYYtextP].c_str(), pfind->value[indexYYtextRes].c_str());
         exit(1);
         return true;
     }
@@ -423,7 +453,10 @@ std::string::size_type Dom::getIndexId(const struct node *p) const
         if (p->id == image)
             return 5;
     else
-        return 0;
+        if (p->id == pageid)
+            return 1;
+        else
+            return 0;
 }
 
 // возвращает индекс значения yytext в векторе value узла р,
@@ -435,8 +468,11 @@ std::string::size_type Dom::getIndexYytext(const struct node *p) const
     else
         if ((p->id == image) && p->value.size() >= 8) // у рисунка полей под yytext может не быть
             return 7;
-    else
-        return 0;
+        else
+            if (p->id == pageid)
+                return 3;
+            else
+                return 0;
 }
 
 // ссылка - команда &... {id:"..."}, параметр res означает, на что указывает ссылка (заголовок, рисунок, ...)
@@ -478,8 +514,35 @@ const std::string& Dom::SeqSymbContrReplace (std::string &s) const
     {
         for(decltype(s.size()) i=0; i < s.size()-1; ++i)
             if (s[i] == '\\' && s[i+1] == '\a')
-                s[i+1] = '\"', ++i;
+                s[i+1] = '\"', s.erase(i,1);
     }
     return s;
+}
 
+// создать ссылку на страницу - команда @pageid	{id:" ... "}
+void Dom::addPageId(const char *s)
+{
+    temp = addChild(temp);
+    temp->id = pageid;
+    temp->value.push_back("id");
+    temp->value.push_back(""); // значение ссылки
+    temp->value.push_back("yylex"); // параметр yylex
+    temp->value.push_back(s);
+    // замена в строке последовательности символов "\\a" на "\""
+    SeqSymbContrReplace(temp->value.back());
+    while(*s != '\"') ++s; ++s; // дойти до начала id
+    while(*s != '\"') temp->value[1].push_back(*s), ++s; ++s; // записать id
+    // замена в строке последовательности символов "\\a" на "\""
+    SeqSymbContrReplace(temp->value[1]);
+    if (temp->value[1].find("\n\n", 0) != std::string::npos)
+    {
+        printf("В команде описания ссылки \"%s\" нельзя использовать двойные переходы на новую строку!\n", s);
+        exit(1);
+    }
+    if (!temp->value[1].size())
+    {
+        printf("В команде описания ссылки \"%s\" нельзя использовать пустое значение ссылки!\n", s);
+        exit(1);
+    }
+	temp = temp->parent;
 }
