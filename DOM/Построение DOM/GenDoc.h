@@ -37,6 +37,8 @@ private:
     inline void writeText (const std::string &t, std::string &buf) const;
     // вставка рисунка
     void writeImage (const decltype(root) p, std::string &buf) const;
+    // создать ссылку на страницу - команда @pageid	{id:" ... "}
+    void writePageId(const decltype(root) p, std::string &buf);
     // делает то же самое, что headerToLaTex, только еще дублирует переходы на новую строку
     const std::string& strToLaTex (std::string &s) const;
     // ищет в строке s служебные символы языка LaTex и заменяет их командами LaTex, позволяющими печатать эти символы, например все найденные символы # заменит на \# (применяется в методе writeTitle, writeSection и др.)
