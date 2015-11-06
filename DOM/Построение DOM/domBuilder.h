@@ -22,7 +22,8 @@ const std::string section3 = "section3";
 const std::string section4 = "section4";
 const std::string text = "text"; // произвольный текст
 const std::string image = "image";
-const std::string idRef = "id"; // ccskrf
+const std::string idRef = "id"; // ссылка (вставить номер ресурса)
+const std::string pageid = "pageid"; // ссылка на страницу
 const std::string nothing = "nothing"; // пустой узел
 
 
@@ -60,6 +61,7 @@ const bool replaceSeqSymbContr = true; // заменять ли при зане�
 // метод этой замены
 const std::string& SeqSymbContrReplace (std::string &s) const;
 
+
 public:
 
 Dom();
@@ -71,11 +73,16 @@ void addToc(); // Содержание
 void addTitleBegin(const char *s); // начало команды @title
 void addTitle(); // окончание команды - @end title
 
+
+// команда вида @image{text:" ... "; ref:" ... "; id:" ... "}
+void addImageRef(const char *s, decltype(root->children.size()) n1, decltype(n1) n2, decltype(n1) n3);
 // рисунок с подписью и путем к файлу, в параметрах индексы - индексы для вектора value,
 // куда записывать параметры (в команде могут следовать в другом порядке).
+// команда вида @image{text:" ... "; ref:" ... "}
 void addImageRef(const char *s, decltype(root->children.size()) n1, decltype(n1) n2);
 // рисунок без подписи и без нумерации в документе
-void addImageRef(const char *s);
+// команда вида @image{ref:" ... "}
+void addImageRef(const char *s, decltype(root->children.size()) n1=3);
 void addSection1Begin(const char *s); // начало команды заголовка уровня 1 (команда вида @section ...), название заголовка заполняется в методе addText
 void addSection2Begin(const char *s); // заголовок уровня 2
 void addSection3Begin(const char *s); // заголовок уровня 3
@@ -86,6 +93,8 @@ void addSection_1Param(const char *s, const std::string &sec, decltype(root->chi
 void addSection_2Param(const char *s, const std::string &sec, decltype(root->children.size()) n);
 // ссылка - команда &... {id:"..."}, параметр res означает, на что указывает ссылка (заголовок, рисунок, ...)
 void addId(const char *s, const std::string &res);
+// создать ссылку на страницу - команда @pageid	{id:" ... "}
+void addPageId(const char *s);
 
 private:
 Dom (const Dom &d) {}
