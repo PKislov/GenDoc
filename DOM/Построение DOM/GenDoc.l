@@ -133,6 +133,45 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addId(yytext, "section4");\
 		 }
 
+#define	GETIMAGE2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 1, 3, 5);\
+		}
+#define	GETIMAGE2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 1, 5, 3);\
+		}
+#define	GETIMAGE2PARAM_3 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 5, 1, 3);\
+		}
+#define	GETIMAGE2PARAM_4 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 5, 3, 1);\
+		}
+#define	GETIMAGE2PARAM_5 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 3, 5, 1);\
+		}
+#define	GETIMAGE2PARAM_6 {\
+	gen->addText(yyout, fileOut);\
+	gen->addImageRef(yytext, 3, 1, 5);\
+		}
+
+#define	GETIDIMAGE {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "image");\
+		 }
+
+#define	CREATPAGEID {\
+	gen->addText(yyout, fileOut);\
+	gen->addPageId(yytext);\
+		 }
+#define	GETPAGEID {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "pageid");\
+		}
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
@@ -164,6 +203,22 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 &[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION2
 &[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION3
 &[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION4
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_1
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_1
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_2
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_3
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_3
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_4
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_4
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_5
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_5
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_6
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_6
+&[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDIMAGE
+&[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETIDIMAGE
+@[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	CREATPAGEID
+&[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETPAGEID
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -173,7 +228,6 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
-
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
