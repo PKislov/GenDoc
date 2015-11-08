@@ -172,6 +172,24 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addId(yytext, "pageid");\
 		}
 
+#define	GETCODELATEXBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeBegin(yytext, "latex");\
+		 }
+#define	GETCODEOTHERBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeBegin(yytext);\
+		 }
+
+#define	GETCODELATEX {\
+	gen->addText(yyout, fileOut);\
+	gen->addCode("latex");\
+		 }
+#define	GETCODEOTHER {\
+	gen->addText(yyout, fileOut);\
+	gen->addCode();\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
@@ -219,6 +237,10 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 &[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETIDIMAGE
 @[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	CREATPAGEID
 &[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETPAGEID
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}[ \t\n]+		GETCODELATEXBEGIN
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}[ \t\n]+						GETCODEOTHERBEGIN
+[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEX
+[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}		GETCODEOTHER
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -228,6 +250,7 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
+
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
