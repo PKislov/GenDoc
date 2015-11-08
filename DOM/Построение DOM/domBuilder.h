@@ -12,11 +12,11 @@ const std::string document = "document"; // корень дерева, узел 
 const std::string title = "title"; // заголовок документа
 const std::string titleBegin = "titlebegin";
 const std::string toc = "toc"; // содержание (оглавление)
-const std::string section1Begin = "section1begin"; // начало команды заголовка
+const std::string section1Begin = "section1begin"; // начало команды заголовка (без имени заголовка)
 const std::string section2Begin = "section2begin";
 const std::string section3Begin = "section3begin";
 const std::string section4Begin = "section4begin";
-const std::string section1 = "section1";
+const std::string section1 = "section1"; // заголовок с именем
 const std::string section2 = "section2";
 const std::string section3 = "section3";
 const std::string section4 = "section4";
@@ -24,6 +24,8 @@ const std::string text = "text"; // произвольный текст
 const std::string image = "image";
 const std::string idRef = "id"; // ссылка (вставить номер ресурса)
 const std::string pageid = "pageid"; // ссылка на страницу
+const std::string codeBegin = "codebegin"; // начало блока кода @code {}
+const std::string code = "code"; // код (LaTeX или другой)
 const std::string nothing = "nothing"; // пустой узел
 
 
@@ -57,9 +59,9 @@ std::string::size_type getIndexId(const struct node *p) const;
 // возвращает 0 если узел не содержит yytext
 std::string::size_type getIndexYytext(const struct node *p) const;
 
-const bool replaceSeqSymbContr = true; // заменять ли при занесении данных в DOM последовательности символов "\\a" на "\""
-// метод этой замены
-const std::string& SeqSymbContrReplace (std::string &s) const;
+// заменять ли при занесении данных в DOM последовательности символов "\\a"
+// на на одну кавычку " (если параметр fPareamInQuotes истина), иначе на "\\""
+const std::string& SeqSymbContrReplace (std::string &s, const bool fPareamInQuotes = true) const;
 
 
 public:
@@ -95,6 +97,10 @@ void addSection_2Param(const char *s, const std::string &sec, decltype(root->chi
 void addId(const char *s, const std::string &res);
 // создать ссылку на страницу - команда @pageid	{id:" ... "}
 void addPageId(const char *s);
+// начало команды @code {}, type - тип кода (LaTeX или др.)
+void addCodeBegin(const char *s, const char *type = "");
+void addCode(const char *type = ""); // окончание команды - @end code {}
+
 
 private:
 Dom (const Dom &d) {}
