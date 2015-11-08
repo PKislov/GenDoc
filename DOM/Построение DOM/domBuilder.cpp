@@ -63,7 +63,7 @@ void Dom::addTitleBegin(const char *s) // начало команды @title
     temp->id = titleBegin;
     // под название документа, пока для поисковика ошибок записать текст команды в оригинальном регистре
     temp->value.push_back(s);
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value.back());
     temp = temp->parent;
 }
@@ -93,7 +93,7 @@ void Dom::addTitle() // окончание команды - @end title
 
                 if(root->children[i1]->id != text)
                 {
-                    puts ("В теле команды \"@title ... @end title\" необходимо указывать только текст!\n");
+                    puts ("В теле команды \"@title ... @end title\" можно указывать только текст!\n");
                     exit(1);
                 }
                 root->children[i]->value[0] += root->children[i1]->value[0];
@@ -110,7 +110,66 @@ void Dom::addTitle() // окончание команды - @end title
             return;
         }
     }
-    puts ("Отсутствует начало команды \"@end title\"!\n");
+    puts ("Отсутствует начало команды \"@title ... @end title\"!\n");
+    exit(1);
+}
+
+// начало команды @code {}, type - тип кода (LaTeX или др.)
+void Dom::addCodeBegin(const char *s, const char *type)
+{
+    temp = addChild(temp);
+    temp->id = codeBegin;
+    // для поисковика ошибок записать текст команды в оригинальном регистре
+    temp->value.push_back(s);
+    // замена в строке последовательности символов "\\a" на одну кавычку "
+    SeqSymbContrReplace(temp->value.back());
+    temp->value.push_back(type); // записать тип кода (LaTeX или другой)
+    temp = temp->parent;
+}
+
+void Dom::addCode(const char *type) // окончание команды - @end code {}
+{
+    decltype(temp) pfind = NULL; // для сообщения об ошибке
+
+    // найти в дереве начало команды @code {}
+    for (decltype(temp->children.size()) i = temp->children.size()-1; i > 0; --i)
+    {
+        // нашли начало команды
+        if (temp->children[i]->id == codeBegin)
+        {
+            pfind = temp->children[i];
+            // если начало команды подходит по типу кода
+            if (temp->children[i]->value[1] == type)
+            {
+                temp->children[i]->id = code;
+                temp->children[i]->value[0].clear(); // текст кода
+                // если пустой текст блока кода
+                if(i-1 == -1)
+                    return;
+
+                // копирование текст кода в узел temp->children[i], удаление текстовых узлов после начала команды code
+                for (decltype(temp->children.size()) i1=i+1; i1 < temp->children.size(); ++i1)
+                {
+
+                    if(temp->children[i1]->id != text)
+                    {
+                        printf ("В теле команды \"@code{%s} ... @end code{%s}\" можно указывать только текст!\n", type, type);
+                        exit(1);
+                    }
+                    temp->children[i]->value[0] += temp->children[i1]->value[0];
+                    delete temp->children[i1];
+                    temp->children[i1] = NULL;
+                    temp->children.erase(temp->children.begin()+i1);
+                    i1 = i;
+                }
+                return;
+            }
+        }
+    }
+    if (!pfind)
+        printf ("Отсутствует начало команды \"@code{%s} ... @end code{%s}\"!\n", type, type);
+    else
+        printf ("Начало и конец команды \"@code{%s} ... @end code{%s}\" не соответствуют по типу!\n", pfind->value[1].c_str(), type);
     exit(1);
 }
 
@@ -207,7 +266,7 @@ void Dom::addSection_1Param(const char *s, const std::string &sec, decltype(root
     temp->id = sec; // указать уровень заголовка
     while(*s != '\"') ++s; ++s; // дойти до начала text
     while(*s != '\"') temp->value[n].push_back(*s), ++s; ++s; // записать заголовок
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value[n]);
     // если заголовок содержит двойные переходы на новую строку, то TexLive это
     // примет за ошибку
@@ -232,7 +291,7 @@ void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root
     while(*s != '\"') ++s; ++s; // дойти до конца text
     while(*s != '\"') ++s; ++s; // дойти до начала id
     while(*s != '\"') temp->value[n].push_back(*s), ++s; ++s; // записать заголовок
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value[n]);
     // если заголовок содержит двойные переходы на новую строку, то TexLive это
     // примет за ошибку
@@ -251,12 +310,11 @@ void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root
     temp->value.push_back("yylex"); // параметр yylex
     temp->value.push_back(sbegin); // значение yylex - строка команды от лексера (нужна для поиска повторов ссылок)
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
+    SeqSymbContrReplace(temp->value.back(), false);
 
     // ищет в DOM ссылку, содержащуюся в узле р (метод findIdInDom) и выводит сообщение об ошибке,
     // если ссылка уже объявлена
     showDuplicateIdInDom(temp);
-
 }
 
 void Dom::addToc() // Содержание
@@ -277,7 +335,7 @@ void Dom::addImageRef(const char *s, decltype(root->children.size()) n1, decltyp
     temp->value.push_back("yylex"); // параметр yylex
     temp->value.push_back(sbegin); // значение yylex - строка команды от лексера (нужна для поиска повторов ссылок)
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
+    SeqSymbContrReplace(temp->value.back(), false);
 
     while(*s != '\"') ++s; ++s; // пропустить первый параметр
     while(*s != '\"') ++s; ++s;
@@ -332,7 +390,7 @@ void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1) // р�
     temp->value.push_back(""); // значение id
     while(*s != '\"') ++s; ++s; // дойти до начала ref
     while(*s != '\"') temp->value[n1].push_back(*s), ++s; ++s; // записать ref
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value[n1]);
     if (temp->value[n1].find("\n\n", 0) != std::string::npos)
     {
@@ -367,7 +425,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     fclose(f);
     remove(name);
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
+    SeqSymbContrReplace(temp->value.back(), false);
     if (!(f = fopen(name, "wt")))
     {
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
@@ -485,14 +543,12 @@ void Dom::addId(const char *s, const std::string &res)
     temp->value.push_back("yylex"); // параметр yylex
     temp->value.push_back(s);
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
+    SeqSymbContrReplace(temp->value.back(), false);
     temp->value.push_back("res"); // на какой ресурс указывает (рисунок, таблица, ...)
     temp->value.push_back(res);
-    // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
     while(*s != '\"') ++s; ++s; // дойти до начала ref
     while(*s != '\"') temp->value[1].push_back(*s), ++s; ++s; // записать id
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value[1]);
     if (temp->value[1].find("\n\n", 0) != std::string::npos)
     {
@@ -507,14 +563,21 @@ void Dom::addId(const char *s, const std::string &res)
 	temp = temp->parent;
 }
 
-// замена в строке последовательности символов "\\a" на "\""
-const std::string& Dom::SeqSymbContrReplace (std::string &s) const
+// заменять ли при занесении данных в DOM последовательности символов "\\a"
+// на на одну кавычку " (если параметр fPareamInQuotes истина), иначе на "\\""
+const std::string& Dom::SeqSymbContrReplace (std::string &s, const bool fPareamInQuotes) const
 {
-    if (replaceSeqSymbContr && s.size() >= 2)
+    if (s.size() >= 2)
     {
         for(decltype(s.size()) i=0; i < s.size()-1; ++i)
             if (s[i] == '\\' && s[i+1] == '\a')
-                s[i+1] = '\"', s.erase(i,1);
+            {
+                s[i+1] = '\"';
+                if (fPareamInQuotes)
+                    s.erase(i,1);
+                else
+                    ++i;
+            }
     }
     return s;
 }
@@ -529,10 +592,10 @@ void Dom::addPageId(const char *s)
     temp->value.push_back("yylex"); // параметр yylex
     temp->value.push_back(s);
     // замена в строке последовательности символов "\\a" на "\""
-    SeqSymbContrReplace(temp->value.back());
+    SeqSymbContrReplace(temp->value.back(), false);
     while(*s != '\"') ++s; ++s; // дойти до начала id
     while(*s != '\"') temp->value[1].push_back(*s), ++s; ++s; // записать id
-    // замена в строке последовательности символов "\\a" на "\""
+    // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value[1]);
     if (temp->value[1].find("\n\n", 0) != std::string::npos)
     {
@@ -544,5 +607,8 @@ void Dom::addPageId(const char *s)
         printf("В команде описания ссылки \"%s\" нельзя использовать пустое значение ссылки!\n", s);
         exit(1);
     }
+    // ищет в DOM ссылку, содержащуюся в узле р (метод findIdInDom) и выводит сообщение об ошибке,
+    // если ссылка уже объявлена
+    showDuplicateIdInDom(temp);
 	temp = temp->parent;
 }
