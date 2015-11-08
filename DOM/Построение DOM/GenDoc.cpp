@@ -15,7 +15,6 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
     std::string templ = "templateForm.tex"; // имя файла шаблона
     FILE *fres; // результат в LaTeX
     FILE *ftempl; // шаблон
-    //remove(result.c_str());
 
     // поиск синтаксических ошибок в DOM
     if (findErrSyntax)
@@ -307,6 +306,11 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf)
                                     {
                                         writePageId(p->children[i], buf);
                                     }
+                                    else
+                                        if (p->children[i]->id == code)
+                                        {
+                                           writeCode(p->children[i], buf);
+                                        }
 
 		if (p->children[i]->children.size())
         {
@@ -501,8 +505,13 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
             {
                 puts ("Отсутствует окончание команды \"@title ... @end title\"!");
             }
+            else
+                if (p->children[i]->id == codeBegin)
+                {
+                    printf ("Отсутствует начало команды \"@code{%s} ... @end code{%s}\"!\n", p->children[i]->value[1].c_str(), p->children[i]->value[1].c_str());
+                }
             // искать ошибки в тексте
-            if (p->children[i]->id == text || p->children[i]->id == titleBegin)
+            if (p->children[i]->id == text || p->children[i]->id == titleBegin || p->children[i]->id == codeBegin)
             {
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
                 for (decltype(stemp.size()) i1=0; i1 < stemp.size(); ++i1) // поиск подстрок в тексте
@@ -579,16 +588,6 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                                 	vInclFiles[i3].text.push_back(ch);
                                             }
                                             fclose(ftemp);
-                                            // в содержимом файла заменить последовательности символов \" на " т.к. в тексте в DOM уже заменено
-                                            if (vInclFiles[i3].text.size() >= 2)
-                                            {
-                                                // проход содержимого файла
-                                                for(decltype(vInclFiles[i3].text.size()) i4=0; i4 < vInclFiles[i3].text.size()-1; ++i4)
-                                                {
-                                                    if(vInclFiles[i3].text[i4] == '\\' && vInclFiles[i3].text[i4+1] == '\"')
-                                                        vInclFiles[i3].text.erase(i4, 1); // удалить "\"
-                                                }
-                                            }
                                         }
 
                                     } // if (vInclFiles.empty())
@@ -755,4 +754,18 @@ void GenDoc::writePageId(const decltype(root) p, std::string &buf)
     std::string stemp = p->value[1];
     headerToLaTex(stemp);
     writeText("\\label{" + stemp + "}", buf);
+}
+
+// вставить код (LaTeX или другой) - команда @code {}
+void GenDoc::writeCode(const decltype(root) p, std::string &buf)
+{
+    if (p->value[1] == "latex") // LaTeX-вставка
+    {
+        writeText(p->value[0], buf);
+    }
+    else
+        if (p->value[1] == "") // оформить листинг программы
+        {
+            writeText("\\begin{verbatim}" + p->value[0] + "\\end{verbatim}", buf);
+        }
 }
