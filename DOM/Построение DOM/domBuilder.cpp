@@ -173,6 +173,39 @@ void Dom::addCode(const char *type) // окончание команды - @end 
     exit(1);
 }
 
+// команды вида @code {ref:" ... "; latex}
+void Dom::addCodeRef(const char *s, const char *type)
+{
+    const char * const sbegin = s; // переменная для поиска ошибок
+    temp = addChild(temp);
+    temp->id = code;
+    temp->value.push_back(""); // под текст кода
+    temp->value.push_back(type); // под тип кода
+    while(*s != '\"') ++s; ++s; // дойти до начала ref
+    while(*s != '\"') temp->value[0].push_back(*s), ++s; // записать ref
+    // замена в строке последовательности символов "\\a" на одну кавычку "
+    SeqSymbContrReplace(temp->value[0]);
+
+    FILE *fp;
+// проверка на существование имени файла исходного кода
+    if(!(fp = fopen(temp->value[0].c_str(), "rt" )))
+	{
+		printf ("Не удалось найти файл исходного кода \"%s\", указанный в команде \"%s\"\n", temp->value[0].c_str(), sbegin);
+		exit(1);
+	}
+	temp->value[0].clear(); // очистить имя файла под содержимое файла
+	char ch;
+    while(!(feof(fp))) // копирование содержимого файла в вектор value узла
+    {
+        ch=fgetc(fp);
+        if (!feof(fp)) temp->value[0].push_back(ch);
+    }
+    if (temp->value[0].size() && temp->value[0][temp->value[0].size()-1] == 10)
+        temp->value[0].erase(temp->value[0].size()-1); // удаляем символ 10
+	fclose(fp);
+    temp = temp->parent;
+}
+
 void Dom::addSection1Begin(const char *s) // заголовок уровня 1
 {
     temp = addChild(root);
