@@ -100,6 +100,8 @@ void addPageId(const char *s);
 // начало команды @code {}, type - тип кода (LaTeX или др.)
 void addCodeBegin(const char *s, const char *type = "");
 void addCode(const char *type = ""); // окончание команды - @end code {}
+// команды вида @code {ref:" ... "; latex}
+void addCodeRef(const char *s, const char *type);
 
 
 private:
