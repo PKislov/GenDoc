@@ -764,8 +764,13 @@ void GenDoc::writeCode(const decltype(root) p, std::string &buf)
         writeText(p->value[0], buf);
     }
     else
-        if (p->value[1] == "") // оформить листинг программы
+        if (p->value[1] == "") // оформить листинг программы без нумерации строк
         {
             writeText("\\begin{verbatim}" + p->value[0] + "\\end{verbatim}", buf);
         }
+        else
+            if (p->value[1] == "listing") // оформить листинг программы c нумерацией строк
+            {
+                writeText("\\begin{listing}{1}" + p->value[0] + "\\end{listing}", buf);
+            }
 }
