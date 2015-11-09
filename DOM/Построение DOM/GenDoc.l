@@ -190,6 +190,15 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addCode();\
 		 }
 
+#define	GETCODELISTINGBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeBegin(yytext, "listing");\
+		 }
+#define	GETCODELISTING {\
+	gen->addText(yyout, fileOut);\
+	gen->addCode("listing");\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
@@ -241,10 +250,12 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}[ \t\n]+						GETCODEOTHERBEGIN
 [ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEX
 [ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}		GETCODEOTHER
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}[ \t\n]+		GETCODELISTINGBEGIN
+[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTING
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
-// Форматы: odt, tex, pdf, html, xml (в формате html), tei (формат TEI XML), db (DocBook, в xml), dvi - требуется TexLive
+// Форматы: odt, pdf, html, xml (в формате html), tei (формат TEI XML), db (DocBook, в xml) - требуется TexLive
 // 	    через pandoc: doc (сначала в html через TexLive, затем в doc через pandoc), docx, markdown
 // Тип документа: form - формуляр
 // Пример команды: ./GenDoc data.txt form odt
