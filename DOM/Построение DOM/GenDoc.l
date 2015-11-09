@@ -199,6 +199,19 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addCode("listing");\
 		 }
 
+#define	GETCODELATEXREF {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeRef(yytext, "latex");\
+		 }
+#define	GETCODEOTHERREF {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeRef(yytext, "");\
+		 }
+#define	GETCODELISTINGREF {\
+	gen->addText(yyout, fileOut);\
+	gen->addCodeRef(yytext, "listing");\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
@@ -252,6 +265,11 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 [ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}		GETCODEOTHER
 @[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}[ \t\n]+		GETCODELISTINGBEGIN
 [ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTING
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODELATEXREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEXREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODEOTHERREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODELISTINGREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTINGREF
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
