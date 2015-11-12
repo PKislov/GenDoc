@@ -26,6 +26,8 @@ const std::string idRef = "id"; // ссылка (вставить номер р�
 const std::string pageid = "pageid"; // ссылка на страницу
 const std::string codeBegin = "codebegin"; // начало блока кода @code {}
 const std::string code = "code"; // код (LaTeX или другой)
+const std::string enumeration = "enum"; // перечисление
+const std::string enumerationBegin = "enumbegin"; // начало команды перечисления
 const std::string nothing = "nothing"; // пустой узел
 
 
@@ -35,7 +37,6 @@ struct node
     std::vector <node*>children; // массив указателей на потомков узла
     std::string id; // тип узла (текст, рисунок, заголовок и т.д.)
     std::vector <std::string>value; // массив значений (аттрибутов) узла (у разных типов разный набор)
-    //std::string yytext; // доп. параметр, строка команды приходит от лексера
 };
 
 node *root; // корень дерева (всегда id равно "document")
@@ -62,7 +63,8 @@ std::string::size_type getIndexYytext(const struct node *p) const;
 // заменять ли при занесении данных в DOM последовательности символов "\\a"
 // на на одну кавычку " (если параметр fPareamInQuotes истина), иначе на "\\""
 const std::string& SeqSymbContrReplace (std::string &s, const bool fPareamInQuotes = true) const;
-
+// удаляет все заданные символы на конце строки
+const std::string& delSymbsInEndStr (std::string &s, const char ch = '\n') const;
 
 public:
 
@@ -102,6 +104,11 @@ void addCodeBegin(const char *s, const char *type = "");
 void addCode(const char *type = ""); // окончание команды - @end code {}
 // команды вида @code {ref:" ... "; latex}
 void addCodeRef(const char *s, const char *type);
+// начало команды перечисления, type - тип перечисления (числовое "numeric" или нечисловое ""),
+// symbItem - - задан ли символ начала пункта (параметр команды в кавычках)
+void addEnumBegin(const char *s, const char *type = "", const bool symbItem = false);
+// команда @end enumerate
+void addEnum(const char *s);
 
 
 private:
