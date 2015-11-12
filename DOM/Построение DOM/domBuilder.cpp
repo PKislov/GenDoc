@@ -173,36 +173,39 @@ void Dom::addCode(const char *type) // окончание команды - @end 
     exit(1);
 }
 
+
 // команды вида @code {ref:" ... "; latex}
 void Dom::addCodeRef(const char *s, const char *type)
 {
+    std::string fname;
     const char * const sbegin = s; // переменная для поиска ошибок
     temp = addChild(temp);
     temp->id = code;
     temp->value.push_back(""); // под текст кода
     temp->value.push_back(type); // под тип кода
     while(*s != '\"') ++s; ++s; // дойти до начала ref
-    while(*s != '\"') temp->value[0].push_back(*s), ++s; // записать ref
+    while(*s != '\"') fname.push_back(*s), ++s; // записать ref
     // замена в строке последовательности символов "\\a" на одну кавычку "
-    SeqSymbContrReplace(temp->value[0]);
+    SeqSymbContrReplace(fname);
 
     FILE *fp;
 // проверка на существование имени файла исходного кода
-    if(!(fp = fopen(temp->value[0].c_str(), "rt" )))
+    if(!(fp = fopen(fname.c_str(), "rt" )))
 	{
-		printf ("Не удалось найти файл исходного кода \"%s\", указанный в команде \"%s\"\n", temp->value[0].c_str(), sbegin);
+		printf ("Не удалось найти файл исходного кода \"%s\", указанный в команде \"%s\"\n", fname.c_str(), sbegin);
 		exit(1);
 	}
-	temp->value[0].clear(); // очистить имя файла под содержимое файла
+
 	char ch;
-    while(!(feof(fp))) // копирование содержимого файла в вектор value узла
+    while(!feof(fp)) // копирование содержимого файла в вектор value узла
     {
-        ch=fgetc(fp);
+        ch=getc(fp);
         if (!feof(fp)) temp->value[0].push_back(ch);
     }
-    if (temp->value[0].size() && temp->value[0][temp->value[0].size()-1] == 10)
-        temp->value[0].erase(temp->value[0].size()-1); // удаляем символ 10
-	fclose(fp);
+
+ 	fclose(fp);
+    if (temp->value[0].size() && temp->value[0].back() == 10)
+        temp->value[0].pop_back(); // удаляем символ 10
     temp = temp->parent;
 }
 
@@ -644,4 +647,96 @@ void Dom::addPageId(const char *s)
     // если ссылка уже объявлена
     showDuplicateIdInDom(temp);
 	temp = temp->parent;
+}
+
+// удаляет все заданные символы на конце строки
+const std::string& Dom::delSymbsInEndStr (std::string &s, const char ch) const
+{
+    while (s.size())
+    {
+        if (s.back() == ch)
+            s.pop_back();
+        else
+            break;
+    }
+    return s;
+}
+// начало команды перечисления, type - тип перечисления (числовое "numeric" или нечисловое ""),
+// symbItem - задан ли символ начала пункта (параметр команды в кавычках)
+void Dom::addEnumBegin(const char *s, const char *type, const bool symbItem)
+{
+    temp = addChild(temp);
+    temp->id = enumerationBegin;
+    // под название документа, пока для поисковика ошибок записать текст команды в оригинальном регистре
+    temp->value.push_back(s);
+    // замена в строке последовательности символов "\\a" на последовательность \"
+    SeqSymbContrReplace(temp->value.back(), false);
+    temp->value.push_back("type");
+    temp->value.push_back(type); // вид перечисления (numeric нумерованное или "" простое через *)
+    temp->value.push_back("symb");
+    temp->value.push_back(""); // под символ обозначающего начало пункта
+    temp->value.push_back("text");
+    temp->value.push_back(""); // текст перечисления
+    if (!symbItem)
+    {
+        temp->value[4] = "*"; // символ по умолчанию
+    }
+    else // записать символ заданный пользователем
+    {
+        // найти начало и конец аргумента команды " ... "
+        auto argBegin = std::strchr(s, '\"'); // найти первое вхождение символа " в строке
+        auto argEnd = std::strrchr(s, '\"'); // найти последнее вхождение символа " в строке
+        // записать символ начала пункта
+        for(auto ptr = argBegin + 1; ptr < argEnd; ++ptr)
+            temp->value[4].push_back(*ptr);
+
+        if (!temp->value[4].size())
+        {
+            std::string stemp(temp->value[0]);
+            printf("Пустой символ начала пунктов в команде \"%s\"!\n", delSymbsInEndStr(stemp).c_str());
+            exit(1);
+        }
+        // замена в строке последовательности символов "\\a" на одну кавычку "
+        SeqSymbContrReplace(temp->value[4]);
+    }
+    temp = temp->parent;
+}
+// команда @end enumerate
+void Dom::addEnum(const char *s)
+{
+    decltype(temp) pfind = NULL; // для сообщения об ошибке
+
+    // найти в дереве начало команды @enumerate {}
+    for (decltype(temp->children.size()) i = temp->children.size()-1; i > 0; --i)
+    {
+        // нашли начало команды
+        if (temp->children[i]->id == enumerationBegin)
+        {
+            pfind = temp->children[i];
+                temp->children[i]->id = enumeration;
+                // если пустой текст блока перечисления
+                if(i-1 == -1)
+                    return;
+
+                // копирование текст перечисления в узел temp->children[i], удаление текстовых узлов после начала команды
+                for (decltype(temp->children.size()) i1=i+1; i1 < temp->children.size(); ++i1)
+                {
+                    if(temp->children[i1]->id != text)
+                    {
+                        std::string stemp(pfind->value[0]); // строка для отображения ошибки
+                        printf ("В теле команды \"%s ... @end enumeration\" можно указывать только текст!\n", delSymbsInEndStr(stemp).c_str());
+                        exit(1);
+                    }
+                    temp->children[i]->value[6] += temp->children[i1]->value[0]; // текст перечисления
+                    delete temp->children[i1];
+                    temp->children[i1] = NULL;
+                    temp->children.erase(temp->children.begin()+i1);
+                    i1 = i;
+                }
+                return;
+        }
+    }
+    if (!pfind)
+        printf ("Отсутствует начало команды \"@enumerate {} ... @end enumerate\"!\n");
+   exit(1);
 }
