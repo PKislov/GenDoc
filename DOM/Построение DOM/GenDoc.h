@@ -41,6 +41,11 @@ private:
     void writePageId(const decltype(root) p, std::string &buf);
     // вставить код (LaTeX или другой) - команда @code {}
     void writeCode(const decltype(root) p, std::string &buf);
+    // вставить перечисление (команда @enumerate)
+    void writeEnum (const decltype(root) p, std::string &buf);
+    // записывает в строку s начало описания перечисления в виде @enumerate {} ...
+    // метод используется в writeEnum для вывода на экран ошибок в перечислении
+    std::string& infoEnumInStr (const decltype(root) p, std::string &s) const;
     // делает то же самое, что headerToLaTex, только еще дублирует переходы на новую строку
     const std::string& strToLaTex (std::string &s) const;
     // ищет в строке s служебные символы языка LaTex и заменяет их командами LaTex, позволяющими печатать эти символы, например все найденные символы # заменит на \# (применяется в методе writeTitle, writeSection и др.)
@@ -65,7 +70,7 @@ private:
     // флаг существования файла "list.tmp"
     bool bflist = false;
     // список команд, по которым будут искаться синтакс. ошибки
-    std::vector<std::string> vcommands = {"@title", "@section", "@image", "@figure", "@include", "&section", "&image", "&figure", "@pageid", "&pageid", "@code"};
+    std::vector<std::string> vcommands = {"@title", "@section", "@image", "@figure", "@include", "&section", "&image", "&figure", "@pageid", "&pageid", "@code", "@enumerate"};
     // структура подключаемого файла
     struct InclFiles
     {
