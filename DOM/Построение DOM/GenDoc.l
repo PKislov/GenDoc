@@ -212,64 +212,96 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addCodeRef(yytext, "listing");\
 		 }
 
+// @enumerate {}
+#define	GETENUMERATENOTNUMBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addEnumBegin(yytext);\
+		 }
+// @enumerate {"@"}
+#define	GETENUMERATENOTNUMSYMBBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addEnumBegin(yytext, "", true);\
+		 }
+// @enumerate {numeric}
+#define	GETENUMERATEBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addEnumBegin(yytext, "numeric");\
+		 }
+// @enumerate {numeric;"@"} или @enumerate {"@";numeric}
+#define	GETENUMERATESYMBBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addEnumBegin(yytext, "numeric", true);\
+		 }
+// @end enumerate
+#define	GETENUMEND {\
+	gen->addText(yyout, fileOut);\
+	gen->addEnum(yytext);\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
-[ \t\n]+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLEEND
+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLEEND
 @[T|t][O|o][C|c][ \t]*['\n']*					GETTOC
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION1_1PARAM
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION2_1PARAM
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION3_1PARAM
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETSECTION4_1PARAM
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION1_2PARAM_1
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION2_2PARAM_1
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION3_2PARAM_1
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION4_2PARAM_1
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION1_2PARAM_2
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION2_2PARAM_2
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION3_2PARAM_2
-@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETSECTION4_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION1_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION2_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION3_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION4_1PARAM
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION1_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION2_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION3_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION4_2PARAM_1
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION1_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION2_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION3_2PARAM_2
+@[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETSECTION4_2PARAM_2
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]+			GETSECTION1BEGIN
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]+			GETSECTION2BEGIN
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]+			GETSECTION3BEGIN
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]+			GETSECTION4BEGIN
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE3
-&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION1
-&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION2
-&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION3
-&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDSECTION4
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_1
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_1
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_2
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_2
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_3
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_3
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_4
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_4
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_5
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_5
-@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_6
-@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIMAGE2PARAM_6
-&[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETIDIMAGE
-&[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETIDIMAGE
-@[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	CREATPAGEID
-&[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}	GETPAGEID
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE3
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE3
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIDSECTION1
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIDSECTION2
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]3[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIDSECTION3
+&[S|s][E|e][C|c][T|t][I|i][O|o][N|n]4[ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIDSECTION4
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_1
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_1
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_2
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_2
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_3
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_3
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_4
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_4
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_5
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_5
+@[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_6
+@[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIMAGE2PARAM_6
+&[I|i][M|m][A|a][G|g][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETIDIMAGE
+&[F|f][I|i][G|g][U|u][R|r][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETIDIMAGE
+@[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	CREATPAGEID
+&[P|p][A|a][G|g][E|e][I|i][D|d][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETPAGEID
 @[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}[ \t\n]+		GETCODELATEXBEGIN
 @[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}[ \t\n]+						GETCODEOTHERBEGIN
-[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEX
-[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}		GETCODEOTHER
+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEX
+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*\}		GETCODEOTHER
 @[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}[ \t\n]+		GETCODELISTINGBEGIN
-[ \t\n]+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTING
-@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODELATEXREF
-@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEXREF
-@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODEOTHERREF
-@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*\}		GETCODELISTINGREF
-@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]+\"[ \t]*;[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTINGREF
+@[E|e][N|n][D|d][ \t]+[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTING
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETCODELATEXREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}		GETCODELATEXREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETCODEOTHERREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETCODELISTINGREF
+@[C|c][O|o][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[L|l][I|i][S|s][T|t][I|i][N|n][G|g][ \t]*\}		GETCODELISTINGREF
+@[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*\}[ \t\n]+		GETENUMERATENOTNUMBEGIN
+@[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*\"[^"\""]*\"[ \t]*\}[ \t\n]+		GETENUMERATENOTNUMSYMBBEGIN
+@[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*[N|n][U|u][M|m][E|e][R|r][I|i][C|c][ \t]*\}[ \t\n]+		GETENUMERATEBEGIN
+@[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*[N|n][U|u][M|m][E|e][R|r][I|i][C|c][ \t]*;[ \t]*\"[^"\""]*\"[ \t]*\}[ \t\n]+		GETENUMERATESYMBBEGIN
+@[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[N|n][U|u][M|m][E|e][R|r][I|i][C|c][ \t]*\}[ \t\n]+		GETENUMERATESYMBBEGIN
+@[E|e][N|n][D|d][ \t]+[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e]			GETENUMEND
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -279,6 +311,8 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
+
+argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 
 	if (argc < 2)
 	{
