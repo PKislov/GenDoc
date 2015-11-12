@@ -311,6 +311,11 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf)
                                         {
                                            writeCode(p->children[i], buf);
                                         }
+                                        else
+                                            if (p->children[i]->id == enumeration)
+                                            {
+                                               writeEnum(p->children[i], buf);
+                                            }
 
 		if (p->children[i]->children.size())
         {
@@ -508,10 +513,17 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
             else
                 if (p->children[i]->id == codeBegin)
                 {
-                    printf ("Отсутствует начало команды \"@code{%s} ... @end code{%s}\"!\n", p->children[i]->value[1].c_str(), p->children[i]->value[1].c_str());
+                    printf ("Отсутствует окончание команды \"@code{%s} ... @end code{%s}\"!\n", p->children[i]->value[1].c_str(), p->children[i]->value[1].c_str());
                 }
+                else
+                    if (p->children[i]->id == enumerationBegin)
+                    {
+                        std::string stemp(p->children[i]->value[0]);
+                        // вывести команду без '\n' на конце
+                        printf ("Отсутствует окончание команды \"%s ... @end enumeration\"!\n", delSymbsInEndStr(stemp).c_str());
+                    }
             // искать ошибки в тексте
-            if (p->children[i]->id == text || p->children[i]->id == titleBegin || p->children[i]->id == codeBegin)
+            if (p->children[i]->id == text || p->children[i]->id == titleBegin || p->children[i]->id == codeBegin || p->children[i]->id == enumerationBegin)
             {
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
                 for (decltype(stemp.size()) i1=0; i1 < stemp.size(); ++i1) // поиск подстрок в тексте
@@ -773,4 +785,201 @@ void GenDoc::writeCode(const decltype(root) p, std::string &buf)
             {
                 writeText("\\begin{listing}{1}" + p->value[0] + "\\end{listing}", buf);
             }
+}
+
+// записывает в строку s начало описания перечисления в виде @enumerate {} ...
+// метод используется в writeEnum для вывода на экран ошибок в перечислении
+std::string& GenDoc::infoEnumInStr (const decltype(root) p, std::string &s) const
+{
+    s.clear();
+    if (p->id == enumeration)
+    {
+        s = p->value[0];
+        delSymbsInEndStr(s);
+        for (decltype(s.size()) i=0, j=0; i < p->value[6].size(); ++i, ++j)
+        {
+            if (p->value[6][i] != '\n' && p->value[6][i] != 10)
+                s.push_back(p->value[6][i]);
+            else
+                --j;
+            if (j == 15) break;
+        }
+        delSymbsInEndStr(s);
+        s += "...";
+    }
+    return s;
+}
+
+// вставить перечисление (команда @enumerate)
+void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
+{
+    std::string stemp;
+    // если в строке перечисления нет вхождений из строки p->value[4] - символа начала пунктов, по умолчанию *
+    if (p->value[6].find(p->value[4], 0) == std::string::npos)
+    {
+        // кратко отобразить на экране конструкцию перечисления
+        printf("В перечислении \"%s\": отсутствуют символы \"%s\" для обозначения начала пунктов!\n", infoEnumInStr(p, stemp).c_str(), p->value[4].c_str());
+        exit(1);
+    }
+
+
+    // TODO: вставить код выполнения вложенных в текст перечисления команд.
+    // команды переводятся в LaTeX и их начало и конец обозначается
+    // "\\a", остальной текст не трогается и в LaTeX не переводится
+
+
+    std::vector<std::string> vsymb; // вектор символов обозначающих начала пунктов (*, **, ...)
+    vsymb.push_back(p->value[4]); // *
+    vsymb.push_back(vsymb.back() + p->value[4]); // **
+    vsymb.push_back(vsymb.back() + p->value[4]); // ***
+    vsymb.push_back(vsymb.back() + p->value[4]); // ****
+
+    struct sItem // структура пункта
+    {
+        std::string level;  // уровень пункта (*, **, ...)
+        std::string item;   // текст пункта
+    };
+
+    std::vector<struct sItem> vitem; // вектор пунктов перечисления
+
+    decltype(p->value[6].size()) i = 0;
+    const std::string &stext = p->value[6]; // ссылка на текст перечисления
+    // найти начало первого пункта
+    while(i < stext.size())
+    {
+        if (!std::isspace(stext[i])) break;
+        ++i;
+    }
+    if (i == stext.size()) return; // если пустой текст перечисления
+    // TODO: вставить код пропуска \\a...\\a
+    decltype(i) i1;
+    // проверить какой символ перед первым пунктом (*, **, ...)
+    for (i1 = vsymb.size()-1;; --i1) // перебор вектора символов, начиная с ****
+    {
+        if (!stext.compare(i, vsymb[i1].size(), vsymb[i1]))
+        {
+            if (i1) // если первый пункт начинается не с *, а с ** *** ...
+            {
+                printf ("В перечислении \"%s\" первый пункт должен начинаться с \"%s\"!\n", infoEnumInStr(p, stemp).c_str(), vsymb[0].c_str());
+                exit(1);
+            }
+            goto met1; // успешно, начинается с *
+        }
+        if (!i1) break;
+    }
+
+    printf ("В перечислении \"%s\" отсутствует символ \"%s\" перед первым пунктом!\n", infoEnumInStr(p, stemp).c_str(), vsymb[0].c_str());
+    exit(1);
+
+    met1: i += vsymb[0].size(); // перейти к началу текста первого пункта
+    vitem.push_back({vsymb[0], ""}); // занести первый пункт
+    i1 = i;
+    while (i1 < stext.size()) // найти индекс окончания текста первого пункта
+    {
+        for (decltype(i) j=0; j < vsymb.size(); ++j)
+        {
+            // нашли символ начала нового пункта
+            if (!stext.compare(i1, vsymb[j].size(), vsymb[j]))
+            {
+                goto met4;
+            }
+        }
+        ++i1;
+    }
+    // занести в вектор пунктов текст первого пункта
+    met4: vitem.back().item.insert(0, stext, i, i1-i);
+
+    // цикл поиска пунктов и заполнения вектора vitem
+    for (i=i1; i < stext.size(); ++i)
+    {
+        vitem.push_back({"", ""});
+        // перебор вектора символов
+        for (i1 = vsymb.size()-1; i1 >= 0; --i1)
+        {
+            if (!stext.compare(i, vsymb[i1].size(), vsymb[i1])) // нашли символ
+            {
+                // записать в вектор символ
+                vitem.back().level.insert(0, stext, i, vsymb[i1].size());
+                break;
+            }
+        }
+        // пропустить символ начала пункта
+        i += vitem.back().level.size();
+        if (i == stext.size()) break; // если дошли до конца текста
+        i1 = i;
+        while (i1 < stext.size()) // найти окончание текста пункта
+        {
+            for (decltype(i) j=0; j < vsymb.size(); ++j)
+            {
+                if (!stext.compare(i1, vsymb[j].size(), vsymb[j])) // нашли символ
+                {
+                    goto met3;
+                }
+            }
+            ++i1;
+        }
+        met3: vitem.back().item.insert(0, stext, i, i1-i); // занести текст пункта
+        i = i1 - 1;
+    }
+
+    // запись в буфер конструкции перечисления на языке LaTeX
+    std::string scommBeg, scommEnd, stemp2;
+    if (p->value[2] == "") // ненумерованое перечисление
+    {
+        scommBeg = "\\begin{itemize}\n";
+        scommEnd = "\\end{itemize}";
+    }
+    else
+    {
+        if (p->value[2] == "numeric") // нумерованое
+        {
+            scommBeg = "\\begin{enumerate}\n";
+            scommEnd = "\\end{enumerate}";
+        }
+    }
+
+    for(i = 0; i < vitem.size(); ++i) // проход вектора пунктов
+    {
+        if (!i) // первый пункт
+        {
+            stemp += scommBeg;
+        }
+        else
+            if (vitem[i-1].level.size() < vitem[i].level.size()) // если предыдущий пункт был меньшего уровня
+            {
+                // если предыдущий пункт на более чем 1 уровень меньше (пр. * и ***)
+                if (vitem[i-1].level.size() + vsymb[0].size() != vitem[i].level.size())
+                {
+                    // построить сообщение об ошибочном пункте
+                    met2: stemp2.clear();
+                    for (decltype(i) j=0, j1=0; j < vitem[i].item.size(); ++j, ++j1)
+                    {
+                        if (vitem[i].item[j] != '\n' && vitem[i].item[j] != 10)
+                            stemp2.push_back(vitem[i].item[j]);
+                        else
+                            --j1;
+                        // в сообщение записать не более 8 первых символов пункта не считая переходов на новую строку
+                        if (j1 == 8) break;
+                    }
+                    stemp2 += "...";
+                    printf("В перечислении \"%s\" неправильный порядок обозначения подпунктов! (см. пункт №%ld \"%s\")\n", infoEnumInStr(p, stemp).c_str(), i+1, stemp2.c_str());
+                    exit(1);
+                }
+                stemp += scommBeg + "\n";
+            }
+            else // если предыдущий пункт был большего уровня
+                if (vitem[i-1].level.size() > vitem[i].level.size())
+                {
+                    // если предыдущий пункт на более чем 1 уровень больше (пр. * и ***)
+                    if (vitem[i-1].level.size() - vsymb[0].size() != vitem[i].level.size())
+                    {
+                        goto met2;
+                    }
+                    stemp += scommEnd + "\n";
+                }
+        stemp2 = vitem[i].item;
+        stemp += "\\item " + headerToLaTex(stemp2) + "\n";
+    }
+    stemp += scommEnd;
+    writeText(stemp, buf);
 }
