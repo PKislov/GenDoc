@@ -65,6 +65,10 @@ std::string::size_type getIndexYytext(const struct node *p) const;
 const std::string& SeqSymbContrReplace (std::string &s, const bool fPareamInQuotes = true) const;
 // удаляет все заданные символы на конце строки
 const std::string& delSymbsInEndStr (std::string &s, const char ch = '\n') const;
+// записывает в строку ext расширение файла из fname
+std::string getExtFname (const std::string &fname, std::string &ext) const;
+// возвращает true если файл с таким именем существует
+bool existFile (const std::string &fname) const;
 
 public:
 
@@ -109,6 +113,8 @@ void addCodeRef(const char *s, const char *type);
 void addEnumBegin(const char *s, const char *type = "", const bool symbItem = false);
 // команда @end enumerate
 void addEnum(const char *s);
+// команда @include {ref:" ... "; odt} - конвертировать файл odt в tex и вставить его содержимое
+void addOdt(const char *s);
 
 
 private:
