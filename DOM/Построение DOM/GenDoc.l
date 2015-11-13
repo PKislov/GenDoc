@@ -238,6 +238,12 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addEnum(yytext);\
 		 }
 
+// @include {ref:" ... "; odt}
+#define	GETINCLUDEODT {\
+	gen->addText(yyout, fileOut);\
+	gen->addOdt(yytext);\
+		 }
+
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
@@ -302,6 +308,8 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*[N|n][U|u][M|m][E|e][R|r][I|i][C|c][ \t]*;[ \t]*\"[^"\""]*\"[ \t]*\}[ \t\n]+		GETENUMERATESYMBBEGIN
 @[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e][ \t]*\{[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[N|n][U|u][M|m][E|e][R|r][I|i][C|c][ \t]*\}[ \t\n]+		GETENUMERATESYMBBEGIN
 @[E|e][N|n][D|d][ \t]+[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e]			GETENUMEND
+@[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[O|o][D|d][T|t][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETINCLUDEODT
+@[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[O|o][D|d][T|t][ \t]*\}		GETINCLUDEODT
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -311,9 +319,6 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
-
-argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
-
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
@@ -432,7 +437,7 @@ argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 		remove((result + ".toc").c_str()); // удалить временный файл .toc
 
 		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
-		if (format == "tex" || format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
+		if (format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
 		{
 			stemp = "Формуляр " + result + "." + format;
 			if(rename((result + "." + format).c_str(), stemp.c_str()))
@@ -442,7 +447,7 @@ argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 			}
 			result=stemp;
 		}
-		else // если формат html, xml и др., не добавлять к имени "Формуляр "
+		else // если формат tex, html, xml и др., не добавлять к имени "Формуляр "
 			{
 				if (format == "xml")
 					result += ".html";
