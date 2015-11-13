@@ -382,18 +382,10 @@ void GenDoc::writeText (const std::string &t, std::string &buf) const
 
 void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
 {
-    decltype(p->value[3].size()) i = 0, j = 0;
-    while(i < p->value[3].size()) // поиск расширения в имени файла с рисунком
+    std::string stemp;
+    if (getExtFname(p->value[3], stemp).size()) // если имя файла содержит расширение
     {
-        if (p->value[3][i] == '.') j = i;
-        ++i;
-    }
-    std::string stemp("");
-    if (j) // если имя файла содержит расширение
-    {
-        ++j;
-        stemp.insert(0, p->value[3], j, p->value[3].size()-j); // вставить расширение имени файла в строку stemp
-        if (stemp != "pdf" && stemp != "png" && stemp != "jpg" && stemp != "jpeg") // если расширение не .pdf, .png, .jpg, .jpeg
+        if (stemp != "pdf" && stemp != "png" && stemp != "jpg" && stemp != "jpeg")
         {
             printf("Формат рисунка \"%s\" не поддерживается программой!\n", p->value[3].c_str());
             exit(1);
@@ -406,13 +398,11 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
     }
 
     // проверка на существование имени файла рисунка
-    FILE *fp;
-    if(!(fp = fopen(p->value[3].c_str(), "rt" )))
-	{
-		printf ("Не удалось найти файл рисунка \"%s\"\n", p->value[3].c_str());
-		exit(1);
-	}
-	fclose(fp);
+    if(!existFile(p->value[3]))
+    {
+        printf ("Не удалось найти файл рисунка \"%s\"\n", p->value[3].c_str());
+        exit(1);
+    }
 	// сформировать код вставки рисунка на LaTex
 	std::string scaption; // подпись к рисунку
 	// если параметр "text" в векторе value не указан (пустая строка), то подпись
@@ -546,7 +536,7 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                             endc = i1 + vcommands[i2].size();
                             // некорр. команда должна оканчиваться '\n' и быть не длиннее 150 знаков
                             for (int i3=0; i3 < 150 && stemp[endc] != '\n' && endc < stemp.size(); ++i3, ++endc);
-                            lengc = endc - i1 /*+ 1*/; // найти длину некорр. команды
+                            lengc = endc - i1; // найти длину некорр. команды
 
                             // вывод сообщения о возможной синтакс. ошибке
                             if(!bflist) // если нет доступа к файлу со списком подключаемых файлов
