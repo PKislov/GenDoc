@@ -185,8 +185,8 @@ void Dom::addCodeRef(const char *s, const char *type)
     temp->value.push_back(type); // под тип кода
     while(*s != '\"') ++s; ++s; // дойти до начала ref
     while(*s != '\"') fname.push_back(*s), ++s; // записать ref
-    // замена в строке последовательности символов "\\a" на одну кавычку "
-    SeqSymbContrReplace(fname);
+    // замена в строке последовательности символов "\\a" на \"
+    SeqSymbContrReplace(fname, false);
 
     FILE *fp;
 // проверка на существование имени файла исходного кода
@@ -739,4 +739,129 @@ void Dom::addEnum(const char *s)
     if (!pfind)
         printf ("Отсутствует начало команды \"@enumerate {} ... @end enumerate\"!\n");
    exit(1);
+}
+
+// команда @include {ref:" ... "; odt} - конвертировать файл odt в tex и вставить его содержимое
+void Dom::addOdt(const char *s)
+{
+    addCodeBegin(s, "latex");
+    temp = temp->children.back(); // вернуться к текущему узлу
+    temp->id = code;
+    temp->value[0].clear(); // очистить от строки s под код на LaTeX
+
+    std::string stemp, fnameExt;
+    auto argBegin = std::strchr(s, '\"');
+    auto argEnd = std::strrchr(s, '\"');
+    // записать в stemp имя файла
+    for(auto ptr = argBegin + 1; ptr < argEnd; ++ptr)
+    {
+        stemp.push_back(*ptr);
+    }
+    SeqSymbContrReplace(stemp, false);
+
+    if (getExtFname (stemp, fnameExt).size())
+    {
+        if (fnameExt != "odt")
+        {
+            printf("Формат файла \"%s\" указанного в команде \"%s\" не поддерживается программой!\n", stemp.c_str(), s);
+            exit(1);
+        }
+    }
+    else // не содержит расширения
+    {
+        printf("Некорректное имя файла \"%s\" указанного в команде \"%s\"!\n", stemp.c_str(), s);
+        exit(1);
+    }
+
+    if (!existFile(stemp))
+    {
+        met1: printf ("Не удалось найти файл \"%s\" указанного в команде \"%s\"!\n", stemp.c_str(), s);
+		exit(1);
+    }
+
+    // перевести файл из odt в tex
+    if (std::system(("w2l " + stemp).c_str()))
+    {
+        met2: printf("Ошибка работы приложения LibreOffice, необходимого для выполнения команды \"%s\"!", s);
+        exit(1);
+    }
+
+    // заменить  расширение файла с odt на tex
+    stemp.erase (stemp.size()-fnameExt.size()-1, fnameExt.size()+1) += ".tex";
+
+    FILE *fp;
+    // открыть файл tex
+    if(!(fp = fopen(stemp.c_str(), "rt" )))
+	{
+		goto met1;
+	}
+
+    std::string &stext = temp->value[0];
+	char ch;
+    while(!feof(fp)) // копирование содержимого файла в строку fnameExt
+    {
+        ch=getc(fp);
+        if (!feof(fp)) stext.push_back(ch);
+    }
+
+ 	fclose(fp);
+ 	// команды в tex файле, содержимое между ними вставить в код, остальное удалить
+ 	const std::string stextBeg = "\\begin{document}", stextEnd = "\\end{document}";
+ 	// если длина содержимого tex файла меньше длины команд
+ 	if (stext.size() < stextBeg.size() || stext.size() < stextEnd.size())
+    {
+        goto met2;
+    }
+
+    for (decltype(stext.size()) ibeg=0; ibeg < stext.size() - stextBeg.size() + 1; ibeg++)
+    {
+        if(!stext.compare(ibeg, stextBeg.size(), stextBeg)) // нашли начало команды stextBeg
+        {
+            stext.erase(0, ibeg + stextBeg.size()); // удалить всё до команды stextBeg вместе с командой
+            goto met3;
+        }
+    }
+    goto met2; // не нашли начало команды stextBeg
+    met3:;
+
+    for (decltype(stext.size()) iend = stext.size() - stextEnd.size(); iend >= 0; iend--)
+    {
+        if(!stext.compare(iend, stextEnd.size(), stextEnd)) // нашли начало команды stextEnd
+        {
+            stext.erase(iend, stext.size()-iend); // удалить всё после команды stextEnd вместе с командой
+            goto met4;
+        }
+    }
+    goto met2; // не нашли начало команды stextEnd
+    met4: temp = temp->parent;
+}
+
+// записывает в строку ext расширение файла из fname
+std::string Dom::getExtFname (const std::string &fname, std::string &ext) const
+{
+    ext.clear();
+    decltype(fname.size()) i = 0, j = 0;
+    while(i < fname.size()) // поиск расширения в имени файла с рисунком
+    {
+        if (fname[i] == '.') j = i;
+        ++i;
+    }
+    if (j) // если имя содержит точку
+    {
+        ++j;
+        ext.insert(0, fname, j, fname.size()-j); // вставить расширение имени файла в строку
+    }
+    return ext;
+}
+
+// возвращает true если файл с таким именем существует
+bool Dom::existFile (const std::string &fname) const
+{
+    FILE *fp;
+    if(!(fp = fopen(fname.c_str(), "rt" )))
+	{
+        return false;
+	}
+	fclose(fp);
+	return true;
 }
