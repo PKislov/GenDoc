@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		puts("Внутренняя ошибка приложения.");
 		return 1;
 	}
-	if (!(yyout = fopen(tName1, "wt"))) // ненужный выходной поток, генерируемый лексером, сбрасывать во временный файл
+	if (!(yyout = fopen(tName1, "w+t"))) // ненужный выходной поток, генерируемый лексером, сбрасывать во временный файл
 	{
 		printf ("Не удалось открыть файл \"%s\"\n", tName1);
 		return 1;
@@ -51,6 +51,21 @@ int main(int argc, char *argv[])
 
 void getIncludeRef ()
 {
+	if (ftell(yyout)) // если содержимое вых. файла не пустое
+	{
+		fseek(yyout, -1, SEEK_CUR);
+		if (getc(yyout) == '\\') // если последний символ в файле '\\'
+		{
+			fseek(yyout, -1, SEEK_CUR); // поставить курсор перед знаком '\\'
+			fprintf(yyout, "%s", yytext); // на его место записать команду @include и выйти
+			return;
+		}
+		else
+			{
+				fseek (yyout, 0, SEEK_END); // вернуть курсор в конец файла
+			}	
+	}
+
 	if (tree->temp->countF) // счетчик выполненных команд include в файле, используется для "прогонки" файла через yyl 
 	{	
 		--tree->temp->countF;
@@ -58,13 +73,12 @@ void getIncludeRef ()
 	}
 	char *ptr = yytext;
 	while(*ptr!='\"') ++ptr; ++ptr; // найти имя подключаемого файла в строке команды
-	string name("");
+	string name;
 	while(*ptr!='\"') name.push_back(*ptr), ++ptr;
 	FILE *temp;
 	if (!(temp = fopen(name.c_str(), "rt" ))) // проверить, что файл существует
 	{
 		printf("Не удалось открыть файл \"%s\"\n", name.c_str());
-		//fprintf(yyout,"Не удалось открыть файл \"%s\"", name.c_str());
 		exit (1);
 	}
 	else
