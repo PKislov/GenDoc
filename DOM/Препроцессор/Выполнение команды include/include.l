@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 		printf ("Не удалось открыть файл \"%s\"\n", fileIn);
 		return 1;
 	}
-	if (!(yyout = fopen(fileOut, "wt")))
+	if (!(yyout = fopen(fileOut, "w+t"))) // создать текстовый файл для чтения и записи
 	{
 		printf ("Не удалось открыть файл \"%s\"\n", fileOut);
 		return 1;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 				printf ("Не удалось открыть файл \"%s\"\n", fileIn);
 				return 1;
 			}
-			if (!(yyout = fopen(tName2, "wt")))
+			if (!(yyout = fopen(tName2, "w+t")))
 			{
 				printf ("Не удалось открыть файл \"%s\"\n", fileOut);
 				return 1;
@@ -109,9 +109,26 @@ int main(int argc, char *argv[])
 
 void getIncludeRef ()
 {
+
+	// проверить, что перед командой @include не стоит знак '\\' запрещающий выполнение команды
+	if (ftell(yyout)) // если содержимое вых. файла не пустое
+	{
+		fseek(yyout, -1, SEEK_CUR);
+		if (getc(yyout) == '\\') // если последний символ в файле '\\'
+		{
+			fseek(yyout, -1, SEEK_CUR); // поставить курсор перед знаком '\\'
+			fprintf(yyout, "%s", yytext); // на его место записать команду @include и выйти
+			return;
+		}
+		else
+			{
+				fseek (yyout, 0, SEEK_END); // вернуть курсор в конец файла
+			}	
+	}
+
 	char *ptr = yytext;
 	while(*ptr!='\"') ++ptr; ++ptr;
-	string name("");
+	string name;
 	while(*ptr!='\"') name.push_back(*ptr), ++ptr; ++ptr;
 	FILE *temp;
 	if (!(temp = fopen(name.c_str(), "rt" )))
