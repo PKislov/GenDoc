@@ -30,6 +30,8 @@ const std::string enumeration = "enum"; // перечисление
 const std::string enumerationBegin = "enumbegin"; // начало команды перечисления
 const std::string nothing = "nothing"; // пустой узел
 
+const std::string symbCancel = "\\"; // символ отмены команды, например "\\@toc"
+
 
 struct node
 {
@@ -69,6 +71,9 @@ const std::string& delSymbsInEndStr (std::string &s, const char ch = '\n') const
 std::string getExtFname (const std::string &fname, std::string &ext) const;
 // возвращает true если файл с таким именем существует
 bool existFile (const std::string &fname) const;
+// функция обработки отмены команды, например "\\@toc"
+// возвращает истину, если перед командой находится символ symbCancel
+bool cancelComm (const char *s);
 
 public:
 
@@ -77,9 +82,9 @@ virtual ~Dom();
 
 // добавление элементов в дерево (методы для лексера):
 void addText(FILE *f, const char *name); // Текст
-void addToc(); // Содержание
+void addToc(const char *s); // Содержание
 void addTitleBegin(const char *s); // начало команды @title
-void addTitle(); // окончание команды - @end title
+void addTitle(const char *s); // окончание команды - @end title
 
 
 // команда вида @image{text:" ... "; ref:" ... "; id:" ... "}
@@ -105,7 +110,7 @@ void addId(const char *s, const std::string &res);
 void addPageId(const char *s);
 // начало команды @code {}, type - тип кода (LaTeX или др.)
 void addCodeBegin(const char *s, const char *type = "");
-void addCode(const char *type = ""); // окончание команды - @end code {}
+void addCode(const char *s, const char *type = ""); // окончание команды - @end code {}
 // команды вида @code {ref:" ... "; latex}
 void addCodeRef(const char *s, const char *type);
 // начало команды перечисления, type - тип перечисления (числовое "numeric" или нечисловое ""),
