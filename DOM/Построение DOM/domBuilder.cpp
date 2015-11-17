@@ -52,6 +52,11 @@ bool Dom::isSectionBegin (const struct node * p) const
 
 void Dom::addTitleBegin(const char *s) // начало команды @title
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     static bool f = false;
     if (f)
     {
@@ -67,8 +72,13 @@ void Dom::addTitleBegin(const char *s) // начало команды @title
     SeqSymbContrReplace(temp->value.back());
     temp = temp->parent;
 }
-void Dom::addTitle() // окончание команды - @end title
+void Dom::addTitle(const char *s) // окончание команды - @end title
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     static bool f = false;
     if (f)
     {
@@ -117,6 +127,11 @@ void Dom::addTitle() // окончание команды - @end title
 // начало команды @code {}, type - тип кода (LaTeX или др.)
 void Dom::addCodeBegin(const char *s, const char *type)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(temp);
     temp->id = codeBegin;
     // для поисковика ошибок записать текст команды в оригинальном регистре
@@ -127,8 +142,13 @@ void Dom::addCodeBegin(const char *s, const char *type)
     temp = temp->parent;
 }
 
-void Dom::addCode(const char *type) // окончание команды - @end code {}
+void Dom::addCode(const char *s, const char *type) // окончание команды - @end code {}
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     decltype(temp) pfind = NULL; // для сообщения об ошибке
 
     // найти в дереве начало команды @code {}
@@ -177,6 +197,11 @@ void Dom::addCode(const char *type) // окончание команды - @end 
 // команды вида @code {ref:" ... "; latex}
 void Dom::addCodeRef(const char *s, const char *type)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     std::string fname;
     const char * const sbegin = s; // переменная для поиска ошибок
     temp = addChild(temp);
@@ -211,6 +236,11 @@ void Dom::addCodeRef(const char *s, const char *type)
 
 void Dom::addSection1Begin(const char *s) // заголовок уровня 1
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(root);
     temp->id = section1Begin;
     temp->value.push_back("text"); // параметр
@@ -222,6 +252,11 @@ void Dom::addSection1Begin(const char *s) // заголовок уровня 1
 
 void Dom::addSection2Begin(const char *s) // заголовок уровня 2
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     decltype(temp) plast = NULL; // проверка
     for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
         if (root->children[i]->id == section1 || root->children[i]->id == section1Begin)
@@ -242,6 +277,11 @@ void Dom::addSection2Begin(const char *s) // заголовок уровня 2
 
 void Dom::addSection3Begin(const char *s) // заголовок уровня 3
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     decltype(temp) plast = NULL; // проверка
     for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
         if (root->children[i]->id == section1 || root->children[i]->id == section1Begin)
@@ -267,6 +307,11 @@ void Dom::addSection3Begin(const char *s) // заголовок уровня 3
 
 void Dom::addSection4Begin(const char *s) // заголовок уровня 4
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     decltype(temp) plast = NULL; // проверка
     for (decltype(root->children.size()) i=0; i < root->children.size(); ++i)
         if (root->children[i]->id == section1 || root->children[i]->id == section1Begin)
@@ -293,6 +338,11 @@ void Dom::addSection4Begin(const char *s) // заголовок уровня 4
 // заголовок уровня sec (команда вида @section1{text:"..."}
 void Dom::addSection_1Param(const char *s, const std::string &sec, decltype(root->children.size()) n)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     const char * const sbegin = s; // переменная для поиска ошибок
 
     // массив указателей на методы addSectionBegin
@@ -316,6 +366,11 @@ void Dom::addSection_1Param(const char *s, const std::string &sec, decltype(root
 // команда вида @section{text:"..."; id:"..."} (n=3) или @section1{id:"..."; text:"..."} (n=1) - вид определяется параметром n
 void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root->children.size()) n)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     const char * const sbegin = s; // переменная для поиска ошибок
     // text ... id ... // в value[n] записать ссылку, n=3 или =1
     if (n == 3)
@@ -353,8 +408,13 @@ void Dom::addSection_2Param(const char *s, const std::string &sec, decltype(root
     showDuplicateIdInDom(temp);
 }
 
-void Dom::addToc() // Содержание
+void Dom::addToc(const char *s) // Содержание
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(root);
 	temp->id = toc;
 	temp = temp->parent;
@@ -364,6 +424,11 @@ void Dom::addToc() // Содержание
 // команда вида @image{text:" ... "; ref:" ... "; id:" ... "}
 void Dom::addImageRef(const char *s, decltype(root->children.size()) n1, decltype(n1) n2, decltype(n1) n3)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     const char * const sbegin = s; // переменная для поиска ошибок
     addImageRef(s, n1, n2);
     temp = temp->children.back(); // вернуться к текущему узлу
@@ -395,6 +460,11 @@ void Dom::addImageRef(const char *s, decltype(root->children.size()) n1, decltyp
 // n - индекс элемента массива value
 void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1, decltype(n1) n2)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     const char * const sbegin = s; // переменная для поиска ошибок
     addImageRef(s, n1);
     temp = temp->children.back(); // вернуться к текущему узлу
@@ -415,6 +485,11 @@ void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1, declty
 // команда вида @image{ref:" ... "}
 void Dom::addImageRef(const char *s,  decltype(root->children.size()) n1) // рисунок с ref
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     const char * const sbegin = s; // переменная для поиска ошибок
     temp = addChild(temp);
     temp->id = image;
@@ -448,9 +523,17 @@ void Dom::addText(FILE *f, const char *name) // Текст
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
 		exit (1);
     }
-    temp = addChild(temp);
-    temp->id  = text;
-    temp->value.push_back("");
+    if (temp && temp->children.size() &&\
+        temp->children.back()->id == text) // узлы "text" идущие друг за другом объединять
+        {
+            temp = temp->children.back();
+        }
+        else
+        {
+            temp = addChild(temp);
+            temp->id  = text;
+            temp->value.push_back("");
+        }
 
     char ch;
     while(!(feof(f)))
@@ -473,7 +556,7 @@ void Dom::addText(FILE *f, const char *name) // Текст
     // на section
     if(isSectionBegin(temp->parent))
     {
-        int i=0;
+        decltype(temp->value.back().size()) i=0;
         // поиск индекса окончания заголовка - до символа новой строки
         while ((i < temp->value.back().size()) && (temp->value.back()[i] != '\n')) ++i;
         // запись текста заголовка
@@ -572,6 +655,11 @@ std::string::size_type Dom::getIndexYytext(const struct node *p) const
 // ссылка - команда &... {id:"..."}, параметр res означает, на что указывает ссылка (заголовок, рисунок, ...)
 void Dom::addId(const char *s, const std::string &res)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(temp);
     temp->id = idRef;
     temp->value.push_back("id");
@@ -621,6 +709,11 @@ const std::string& Dom::SeqSymbContrReplace (std::string &s, const bool fPareamI
 // создать ссылку на страницу - команда @pageid	{id:" ... "}
 void Dom::addPageId(const char *s)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(temp);
     temp->id = pageid;
     temp->value.push_back("id");
@@ -665,6 +758,11 @@ const std::string& Dom::delSymbsInEndStr (std::string &s, const char ch) const
 // symbItem - задан ли символ начала пункта (параметр команды в кавычках)
 void Dom::addEnumBegin(const char *s, const char *type, const bool symbItem)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     temp = addChild(temp);
     temp->id = enumerationBegin;
     // под название документа, пока для поисковика ошибок записать текст команды в оригинальном регистре
@@ -696,6 +794,13 @@ void Dom::addEnumBegin(const char *s, const char *type, const bool symbItem)
             printf("Пустой символ начала пунктов в команде \"%s\"!\n", delSymbsInEndStr(stemp).c_str());
             exit(1);
         }
+        else
+            if (std::isspace(temp->value[4][0]))
+            {
+                std::string stemp(temp->value[0]);
+                printf("Пробельный символ начала пунктов в команде \"%s\"!\n", delSymbsInEndStr(stemp).c_str());
+                exit(1);
+            }
         // замена в строке последовательности символов "\\a" на одну кавычку "
         SeqSymbContrReplace(temp->value[4]);
     }
@@ -704,6 +809,11 @@ void Dom::addEnumBegin(const char *s, const char *type, const bool symbItem)
 // команда @end enumerate
 void Dom::addEnum(const char *s)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     decltype(temp) pfind = NULL; // для сообщения об ошибке
 
     // найти в дереве начало команды @enumerate {}
@@ -744,6 +854,11 @@ void Dom::addEnum(const char *s)
 // команда @include {ref:" ... "; odt} - конвертировать файл odt в tex и вставить его содержимое
 void Dom::addOdt(const char *s)
 {
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
     addCodeBegin(s, "latex");
     temp = temp->children.back(); // вернуться к текущему узлу
     temp->id = code;
@@ -864,4 +979,29 @@ bool Dom::existFile (const std::string &fname) const
 	}
 	fclose(fp);
 	return true;
+}
+
+// функция обработки отмены команды, например "\\@toc"
+// возвращает истину, если перед командой находится символ symbCancel
+bool Dom::cancelComm (const char *s)
+{
+    // если предыдущий узел - текст и на конце текста знак '\\'
+    if (temp && temp->children.size() &&\
+        temp->children.back()->id == text &&\
+        temp->children.back()->value[0].size() >= symbCancel.size())
+    {
+        // индекс начала символа отмены команды на конце текста
+         auto i =  temp->children.back()->value[0].size() - symbCancel.size();
+        // если на конце текста пред. пункта содержится символ отмены команды
+        if(!temp->children.back()->value[0].compare(i, symbCancel.size(), symbCancel))
+        {
+            // удалить символ отмены команды
+            temp->children.back()->value[0].erase(i, i+symbCancel.size());
+            std::string stemp(s);
+            // к концу текста добавить текст команды, перед которой стоял знак
+            temp->children.back()->value[0] += SeqSymbContrReplace(stemp, false);
+            return true;
+        }
+    }
+    return false;
 }
