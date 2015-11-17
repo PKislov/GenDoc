@@ -20,12 +20,12 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // конструкция @title ... @end title разбита на три части и заносится в DOM отдельно (начало команды, текст названия и окончание команды)
 #define GETTITLEEND {\
 	gen->addText(yyout, fileOut);\
-	gen->addTitle();\
+	gen->addTitle(yytext);\
 		 }
 
 #define GETTOC	{\
 	gen->addText(yyout, fileOut);\
-	gen->addToc();\
+	gen->addToc(yytext);\
 		}
 
 #define	GETSECTION1BEGIN {\
@@ -183,11 +183,11 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 
 #define	GETCODELATEX {\
 	gen->addText(yyout, fileOut);\
-	gen->addCode("latex");\
+	gen->addCode(yytext, "latex");\
 		 }
 #define	GETCODEOTHER {\
 	gen->addText(yyout, fileOut);\
-	gen->addCode();\
+	gen->addCode(yytext);\
 		 }
 
 #define	GETCODELISTINGBEGIN {\
@@ -196,7 +196,7 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 		 }
 #define	GETCODELISTING {\
 	gen->addText(yyout, fileOut);\
-	gen->addCode("listing");\
+	gen->addCode(yytext, "listing");\
 		 }
 
 #define	GETCODELATEXREF {\
@@ -319,6 +319,9 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
+
+argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
+
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
@@ -430,6 +433,9 @@ int main(int argc, char *argv[])
 		}
 		else
 			format = "pdf"; // формат по умолчанию
+
+	remove((result + ".aux").c_str()); // файл сформированный pdflatex
+        remove((result + ".log").c_str()); // удалить во избежание ошибок работы pdflatex
 
 	if (type == "form") // формуляр
 	{	
