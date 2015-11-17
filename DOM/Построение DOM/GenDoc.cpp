@@ -107,6 +107,7 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
 				remove(result.c_str()); // удалить файл tex
                 remove((fName + ".aux").c_str()); // файл сформированный pdflatex
                 remove((fName + ".log").c_str()); // файл сформированный pdflatex
+                remove((fName + ".out").c_str());
 			}
 			else
                 if (format == "html")
@@ -363,12 +364,13 @@ void GenDoc::writeSection4 (const std::string &t, std::string &buf, const std::s
 std::string::size_type GenDoc::whereInsertText (const std::string &buf) const
 {
     const std::string sEnd = "\\end{document}";
-    for (decltype(buf.size()) i = buf.size() - sEnd.size(); i >= 0; i--)
+    for (decltype(buf.size()) i = buf.size() - sEnd.size();; i--)
     {
         if(!buf.compare(i, sEnd.size(), sEnd)) // нашли начало команды sEnd
         {
             return i;
         }
+        if (!i) break;
     }
     printf("Некорректно построен шаблон документа: отсутствует утверждение \"%s\"!\n", sEnd.c_str());
     exit(1);
@@ -518,6 +520,12 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
                 for (decltype(stemp.size()) i1=0; i1 < stemp.size(); ++i1) // поиск подстрок в тексте
                 {
+                    // если перед командой стоит знак '\\'
+                    if (i1 >= symbCancel.size() && !stemp.compare(i1-symbCancel.size(), symbCancel.size(), symbCancel))
+                    {
+                        continue;
+                    }
+                    else
                     // проход вектора с командами, ищем вхождения команд в тексте (stemp)
                     for (decltype(vcommands.size()) i2=0; i2 < vcommands.size(); ++i2)
                     {
@@ -608,6 +616,12 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                                                         // если нашли вхождение некорр. команды в файле
                                                         if (!vInclFiles[i4].text.compare(i3, lengc, stemp, i1, lengc))
                                                         {
+                                                            // если перед командой стоит знак '\\', не считать ошибку
+                                                            if (i3 >= symbCancel.size() && !vInclFiles[i4].text.compare(i3-symbCancel.size(), symbCancel.size(), symbCancel))
+                                                            {
+                                                                continue;
+                                                            }
+
                                                             countLine = 1; // счетчик строк
                                                             for (decltype(lengc) i5=0; i5 <= i3; ++i5) // сколько символов '\n' перед началом команды
                                                                 if (vInclFiles[i4].text[i5] == '\n')
@@ -866,13 +880,14 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
     i1 = i;
     while (i1 < stext.size()) // найти индекс окончания текста первого пункта
     {
-        for (decltype(i) j=0; j < vsymb.size(); ++j)
+        for (decltype(i) j = vsymb.size()-1;; --j)
         {
             // нашли символ начала нового пункта
             if (!stext.compare(i1, vsymb[j].size(), vsymb[j]))
             {
                 goto met4;
             }
+            if (!j) break;
         }
         ++i1;
     }
@@ -884,7 +899,7 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
     {
         vitem.push_back({"", ""});
         // перебор вектора символов
-        for (i1 = vsymb.size()-1; i1 >= 0; --i1)
+        for (i1 = vsymb.size()-1;; --i1)
         {
             if (!stext.compare(i, vsymb[i1].size(), vsymb[i1])) // нашли символ
             {
@@ -892,6 +907,7 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
                 vitem.back().level.insert(0, stext, i, vsymb[i1].size());
                 break;
             }
+            if (!i1) break;
         }
         // пропустить символ начала пункта
         i += vitem.back().level.size();
@@ -899,17 +915,40 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
         i1 = i;
         while (i1 < stext.size()) // найти окончание текста пункта
         {
-            for (decltype(i) j=0; j < vsymb.size(); ++j)
+            for (decltype(i) j = vsymb.size()-1;; --j)
             {
                 if (!stext.compare(i1, vsymb[j].size(), vsymb[j])) // нашли символ
                 {
                     goto met3;
                 }
+                if (!j) break;
             }
             ++i1;
         }
         met3: vitem.back().item.insert(0, stext, i, i1-i); // занести текст пункта
         i = i1 - 1;
+    }
+
+    // удалить из вектора пунктов те пункты, где символ начала пункта начинается с "\\"
+    // и прибавить содержимое удаляемых пунктов к предыдущим
+    for (decltype(vitem.size()) i1 = 1; i1 < vitem.size(); ++i1)
+    {
+        // если текст ghtlsleotuj пункта длиннее либо равен длине символа отмены команды
+        if (vitem[i1-1].item.size() >= symbCancel.size())
+        {
+            auto i = vitem[i1-1].item.size() - symbCancel.size(); // индекс начала символа отмены команды на конце текста пункта
+            // если на конце текста пред. пункта содержится символ отмены команды
+            if(!vitem[i1-1].item.compare(i, symbCancel.size(), symbCancel))
+            {
+                // удалить символ отмены команды
+                vitem[i1-1].item.erase(i, i+symbCancel.size());
+                // копировать текущий пункт к содержимому предыд.
+                vitem[i1-1].item += vitem[i1].level + vitem[i1].item;
+                // удалить пункт
+                vitem.erase(vitem.begin()+i1, vitem.begin()+i1+1);
+                --i1;
+            }
+        }
     }
 
     // запись в буфер конструкции перечисления на языке LaTeX
@@ -960,12 +999,11 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
             else // если предыдущий пункт был большего уровня
                 if (vitem[i-1].level.size() > vitem[i].level.size())
                 {
-                    // если предыдущий пункт на более чем 1 уровень больше (пр. * и ***)
-                    if (vitem[i-1].level.size() - vsymb[0].size() != vitem[i].level.size())
+                    // вписать команду scommEnd столько раз насколько пред. пункт большего уровня
+                    for(auto i2 = vitem[i-1].level.size() - vitem[i].level.size(); i2 > 0; --i2)
                     {
-                        goto met2;
+                        stemp += scommEnd + "\n";
                     }
-                    stemp += scommEnd + "\n";
                 }
         stemp2 = vitem[i].item;
         stemp += "\\item " + headerToLaTex(stemp2) + "\n";
