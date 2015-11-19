@@ -193,6 +193,71 @@ void Dom::addCode(const char *s, const char *type) // окончание ком�
     exit(1);
 }
 
+// начало команды @table {}, type - тип кода (на языке LaTeX "latex" или "tag" - описана тэгами)
+void Dom::addTableBegin(const char *s, const char *type)
+{
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
+    temp = addChild(temp);
+    temp->id = tableBegin;
+    // для поисковика ошибок записать текст команды в оригинальном регистре
+    temp->value.push_back(s);
+    // замена в строке последовательности символов "\\a" на одну кавычку "
+    SeqSymbContrReplace(temp->value.back());
+    temp->value.push_back("type");
+    temp->value.push_back(type); // записать тип кода (LaTeX или на тэгах)
+    temp = temp->parent;
+}
+// команда @end table
+void Dom::addTableEnd(const char *s)
+{
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
+    decltype(temp) pfind = NULL; // для сообщения об ошибке
+
+    // найти в дереве начало команды @table {}
+    for (decltype(temp->children.size()) i = temp->children.size()-1; i > 0; --i)
+    {
+        // нашли начало команды
+        if (temp->children[i]->id == tableBegin)
+        {
+            pfind = temp->children[i];
+            temp->children[i]->id = table;
+            temp->children[i]->value.push_back(""); // под код таблицы на языке LaTeX или на тэгах
+                // если пустой текст блока кода
+                if(i-1 == -1)
+                    return;
+
+                // копирование текст кода в узел temp->children[i], удаление текстовых узлов после начала команды table
+                for (decltype(temp->children.size()) i1=i+1; i1 < temp->children.size(); ++i1)
+                {
+
+                    if(temp->children[i1]->id != text)
+                    {
+                        std::string stemp(pfind->value[0]); // строка для отображения ошибки
+                        printf ("В теле команды \"%s ... @end table\" можно указывать только текст!\n", delSymbsInEndStr(stemp).c_str());
+                        exit(1);
+                    }
+                    temp->children[i]->value[3] += temp->children[i1]->value[0];
+                    delete temp->children[i1];
+                    temp->children[i1] = NULL;
+                    temp->children.erase(temp->children.begin()+i1);
+                    i1 = i;
+                }
+                return;
+        }
+    }
+    if (!pfind)
+        printf ("Отсутствует начало команды \"@table {} ... @end table\"!\n");
+    exit(1);
+}
+
 
 // команды вида @code {ref:" ... "; latex}
 void Dom::addCodeRef(const char *s, const char *type)
@@ -450,6 +515,13 @@ void Dom::addImageRef(const char *s, decltype(root->children.size()) n1, decltyp
         printf("В команде описания рисунка \"%s\" нельзя использовать двойные переходы на новую строку!", sbegin);
         exit(1);
     }
+
+        if (!temp->value[5].size())
+        {
+            printf("В команде описания рисунка \"%s\" нельзя использовать пустое значение ссылки!\n", sbegin);
+            exit(1);
+        }
+
     // ищет в DOM ссылку, содержащуюся в узле р (метод findIdInDom) и выводит сообщение об ошибке,
     // если ссылка уже объявлена
     showDuplicateIdInDom(temp);
@@ -629,11 +701,14 @@ std::string::size_type Dom::getIndexId(const struct node *p) const
     else
         if (p->id == image)
             return 5;
-    else
-        if (p->id == pageid)
-            return 1;
         else
-            return 0;
+            if (p->id == pageid)
+                return 1;
+            else
+                if (p->id == table && p->value.size() == 10 && p->value[8].size())
+                    return 9;
+                else
+                    return 0;
 }
 
 // возвращает индекс значения yytext в векторе value узла р,
@@ -649,7 +724,10 @@ std::string::size_type Dom::getIndexYytext(const struct node *p) const
             if (p->id == pageid)
                 return 3;
             else
-                return 0;
+                if (p->id == table && p->value.size() == 10 && p->value[8].size())
+                    return 0;
+                else
+                    return 0;
 }
 
 // ссылка - команда &... {id:"..."}, параметр res означает, на что указывает ссылка (заголовок, рисунок, ...)
@@ -852,52 +930,55 @@ void Dom::addEnum(const char *s)
 }
 
 // команда @include {ref:" ... "; odt} - конвертировать файл odt в tex и вставить его содержимое
-void Dom::addOdt(const char *s)
+// refBeg - указатель на начало имени файла в строке s, указывает на первый символ имени
+void Dom::addOdt(const char *s, const char *refBeg)
 {
     // если перед командой стоит знак '\\'
     if (cancelComm (s))
     {
         return;
     }
+
     addCodeBegin(s, "latex");
     temp = temp->children.back(); // вернуться к текущему узлу
     temp->id = code;
     temp->value[0].clear(); // очистить от строки s под код на LaTeX
 
-    std::string stemp, fnameExt;
-    auto argBegin = std::strchr(s, '\"');
-    auto argEnd = std::strrchr(s, '\"');
-    // записать в stemp имя файла
-    for(auto ptr = argBegin + 1; ptr < argEnd; ++ptr)
+    std::string stemp, fnameExt, stemp2(s);
+    if (!refBeg) // если команда @include {odt;ref:" ... "}
     {
-        stemp.push_back(*ptr);
+        refBeg = s;
+        while(*refBeg != '\"') ++refBeg; ++refBeg; // дойти до начала ref
     }
+    while(*refBeg != '\"') stemp.push_back(*refBeg), ++refBeg; ++refBeg; // записать ref
+
     SeqSymbContrReplace(stemp, false);
+    SeqSymbContrReplace(stemp2, false);
 
     if (getExtFname (stemp, fnameExt).size())
     {
         if (fnameExt != "odt")
         {
-            printf("Формат файла \"%s\" указанного в команде \"%s\" не поддерживается программой!\n", stemp.c_str(), s);
+            printf("Формат файла \"%s\" указанного в команде \"%s\" не поддерживается программой!\n", stemp.c_str(), stemp2.c_str());
             exit(1);
         }
     }
     else // не содержит расширения
     {
-        printf("Некорректное имя файла \"%s\" указанного в команде \"%s\"!\n", stemp.c_str(), s);
+        printf("Некорректное имя файла \"%s\" указанного в команде \"%s\"!\n", stemp.c_str(), stemp2.c_str());
         exit(1);
     }
 
     if (!existFile(stemp))
     {
-        met1: printf ("Не удалось найти файл \"%s\" указанного в команде \"%s\"!\n", stemp.c_str(), s);
+        met1: printf ("Не удалось найти файл \"%s\" указанный в команде \"%s\"!\n", stemp.c_str(), stemp2.c_str());
 		exit(1);
     }
 
     // перевести файл из odt в tex
     if (std::system(("w2l " + stemp).c_str()))
     {
-        met2: printf("Ошибка работы приложения LibreOffice, необходимого для выполнения команды \"%s\"!", s);
+        met2: printf("Ошибка работы приложения LibreOffice, необходимого для выполнения команды \"%s\"!", stemp2.c_str());
         exit(1);
     }
 
@@ -920,6 +1001,7 @@ void Dom::addOdt(const char *s)
     }
 
  	fclose(fp);
+ 	remove(stemp.c_str());
  	// команды в tex файле, содержимое между ними вставить в код, остальное удалить
  	const std::string stextBeg = "\\begin{document}", stextEnd = "\\end{document}";
  	// если длина содержимого tex файла меньше длины команд
@@ -949,6 +1031,255 @@ void Dom::addOdt(const char *s)
     }
     goto met2; // не нашли начало команды stextEnd
     met4: temp = temp->parent;
+}
+
+
+// команда @table {ref: " ... "}
+void Dom::addTable1Param(const char *s, const char *refBeg)
+{
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
+    addOdt(s, refBeg);
+    temp = temp->children.back(); // вернуться к текущему узлу
+    // создать параметры таблицы
+    temp->id = table;
+    temp->value.push_back("");      // значение типа таблицы (LaTeX)    [2]
+    temp->value.push_back("");      // описание (rjl) таблицы на LaTeX  [3]
+    temp->value.push_back("ref");   //                                  [4]
+    temp->value.push_back("");      // путь к файлу                     [5]
+    temp->value.push_back("");      // text                             [6]
+    temp->value.push_back("");      // подпись к таблице                [7]
+    temp->value.push_back("");      //  id                              [8]
+    temp->value.push_back("");      // ссылка на таблицу                [9]
+    // откорр. узел табдицы после выполнения addOdt
+    temp->value[3] = temp->value[0]; // переместить код таблицы
+    temp->value[2] = temp->value[1]; // тип таблицы (LaTeX)
+    temp->value[0] = s; // код команды
+    SeqSymbContrReplace(temp->value[0], false);
+    temp->value[1] = "type";
+    if (!refBeg) // если команда @table {ref:" ... "}
+    {
+        refBeg = s;
+        while(*s != '\"') ++s; ++s; // дойти до начала ref
+    }
+    while(*s != '\"') temp->value[5].push_back(*s), ++s; ++s; // записать ref
+    SeqSymbContrReplace(temp->value[5], false);
+    temp = temp->parent;
+}
+
+// команда @table {ref: " ... "; text: " ... "} n1=1, n2=2
+// @table {text: " ... "; ref: " ... "} n1=2, n2=1
+// n1 - ref, n2 - text
+void Dom::addTable2Param(const char *s, int n1, int n2)
+{
+    // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
+    auto refBeg = s; // должен указывать на первый символ имени
+    for (int i=0; i < n1*2-1; ++i)
+    {
+        while(*refBeg != '\"') ++refBeg; ++refBeg; // дойти до начала ref
+    }
+    addTable1Param(s, refBeg);
+    temp = temp->children.back(); // вернуться к текущему узлу
+    temp->value[6] = "text";
+    refBeg = s; // записать параметр text - подпись таблицы
+    for (int i=0; i < n2*2-1; ++i)
+    {
+        while(*refBeg != '\"') ++refBeg; ++refBeg; // дойти до подписи
+    }
+    while(*refBeg != '\"') temp->value[7].push_back(*refBeg), ++refBeg; ++refBeg; // запись подписи
+    SeqSymbContrReplace(temp->value[7]);
+    if (temp->value[7].find("\n\n", 0) != std::string::npos)
+    {
+        printf("В команде описания таблицы \"%s\" нельзя использовать двойные переходы на новую строку!", temp->value[0].c_str());
+        exit(1);
+    }
+
+    // вставка подписи к таблице - для разных видов таблиц по-разному
+
+    // вектор возможных команд начала описания таблицы
+    std::vector<std::string> vcommBegTab = {"\\begin{tabular}", "\\begin{supertabular}", "\\begin{longtable}"};
+    // вектор возможных команд конца описания таблицы
+    std::vector<std::string> vcommEndTab = {"\\end{tabular}", "\\end{supertabular}", "\\end{longtable}"};
+
+    std::string &stemp = temp->value[3];
+    bool writeCap = false; // для проверки, что блок таблицы был найден
+
+        // для таблицы вида "\\begin{tabular}" вставить подпись после "\\end{tabular}" и заверщить блок "\\end{table}"
+        // проход кода LaTeX
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommEndTab[0].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommEndTab[0].size(), vcommEndTab[0], 0, vcommEndTab[0].size()))
+            {
+                std::string scap = "\n\\caption{" + temp->value[7] + "}\n\\end{table}";
+                stemp.insert(i1 + vcommEndTab[0].size(), scap);
+                i1 += scap.size() - 1;
+                writeCap = true;
+            }
+        }
+        // для таблицы вида "\\begin{tabular}" установить начало блока "\\begin{table}" - вставить перед "\\begin{tabular}"
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommBegTab[0].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommBegTab[0].size(), vcommBegTab[0], 0, vcommBegTab[0].size()))
+            {
+                std::string scap = "\\begin{table}[ht]\n";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommBegTab[0].size() - 1;
+            }
+        }
+
+        // для таблицы вида "\\begin{supertabular}" вставить подпись перед "\\begin{supertabular}"
+        // проход кода LaTeX
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommBegTab[1].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommBegTab[1].size(), vcommBegTab[1], 0, vcommBegTab[1].size()))
+            {
+                std::string scap = "\\topcaption{" + temp->value[7] + "}\n";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommBegTab[1].size() - 1;
+                writeCap = true;
+            }
+        }
+
+        // для таблицы longtable вставить подпись перед "\\end{longtable}"
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommEndTab[2].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommEndTab[2].size(), vcommEndTab[2], 0, vcommEndTab[2].size()))
+            {
+                std::string scap = "\\caption{" + temp->value[7] + "}";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommEndTab[2].size() - 1;
+                writeCap = true;
+            }
+        }
+
+        if (!writeCap)
+        {
+            printf("Не удалось установить подпись для таблицы, указанной в команде \"%s\" !\n", temp->value[0].c_str());
+            printf("Игнорировать [Y/N] ? ");
+            if (!getAnswer()) // ответ N
+            {
+                puts("\nГенерация документа прервана.");
+                exit(1);
+            }
+        }
+
+    temp = temp->parent;
+}
+
+// команда @table {ref: " ... "; text: " ... "; id: " ... "}
+void Dom::addTable3Param(const char *s, int n1, int n2, int n3)
+{
+        // если перед командой стоит знак '\\'
+    if (cancelComm (s))
+    {
+        return;
+    }
+    addTable2Param(s, n1, n2);
+    temp = temp->children.back(); // вернуться к текущему узлу
+    temp->value[8] = "id";
+    auto idBeg = s; // должен указывать на первый символ имени
+    for (int i=0; i < n3*2-1; ++i)
+    {
+        while(*idBeg != '\"') ++idBeg; ++idBeg; // дойти до id
+    }
+    while(*idBeg != '\"') temp->value[9].push_back(*idBeg), ++idBeg; ++idBeg; // запись id
+    SeqSymbContrReplace(temp->value[9]);
+    if (temp->value[9].find("\n\n", 0) != std::string::npos)
+    {
+        printf("В команде описания таблицы \"%s\" нельзя использовать двойные переходы на новую строку!", temp->value[0].c_str());
+        exit(1);
+    }
+    if (!temp->value[9].size())
+    {
+        printf("В команде описания таблицы \"%s\" нельзя использовать пустое значение ссылки!\n", temp->value[0].c_str());
+        exit(1);
+    }
+    // если ссылка уже объявлена
+    showDuplicateIdInDom(temp);
+
+    // вставка ссылки к таблице - для разных видов таблиц по-разному. Ссылку вставить только в одну таблицу!
+
+    // вектор возможных команд начала описания таблицы
+    std::vector<std::string> vcommBegTab = {"\\begin{tabular}", "\\begin{supertabular}", "\\begin{longtable}"};
+    // вектор возможных команд конца описания таблицы
+    std::vector<std::string> vcommEndTab = {"\\end{tabular}", "\\end{supertabular}", "\\end{longtable}", "\\end{table}"};
+
+    std::string &stemp = temp->value[3];
+    bool writeCap = false; // для проверки, что блок таблицы был найден
+
+    // для таблицы вида "\\begin{tabular}" вставить ссылку перед "\\end{table}"
+    // проход кода LaTeX
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommEndTab[3].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommEndTab[3].size(), vcommEndTab[3], 0, vcommEndTab[3].size()))
+            {
+                if (writeCap)
+                {
+                    goto met1;
+                }
+                std::string scap = "\\label{" + temp->value[9] + "}";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommEndTab[3].size() - 1;
+                writeCap = true;
+            }
+        }
+
+        // для таблицы вида "\\begin{supertabular}" вставить ссылку перед "\\begin{supertabular}"
+        // проход кода LaTeX
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommBegTab[1].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommBegTab[1].size(), vcommBegTab[1], 0, vcommBegTab[1].size()))
+            {
+                if (writeCap)
+                {
+                    goto met1;
+                }
+                std::string scap = "\\label{" + temp->value[9] + "}\n";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommBegTab[1].size() - 1;
+                writeCap = true;
+            }
+        }
+
+        // для таблицы longtable вставить ссылку перед "\\end{longtable}"
+        for (decltype(stemp.size()) i1 = 0; i1 < stemp.size() - vcommEndTab[2].size() + 1; ++i1)
+        {
+            if (!stemp.compare(i1, vcommEndTab[2].size(), vcommEndTab[2], 0, vcommEndTab[2].size()))
+            {
+                if (writeCap)
+                {
+                    goto met1;
+                }
+                std::string scap = "\\label{" + temp->value[9] + "}";
+                stemp.insert(i1, scap);
+                i1 += scap.size() + vcommEndTab[2].size() - 1;
+                writeCap = true;
+            }
+        }
+
+        if (!writeCap)
+        {
+            printf("Не удалось установить ссылку для таблицы, указанной в команде \"%s\" !\n", temp->value[0].c_str());
+            printf("Игнорировать [Y/N] ? ");
+            if (!getAnswer()) // ответ N
+            {
+                puts("\nГенерация документа прервана.");
+                exit(1);
+            }
+        }
+
+    temp = temp->parent;
+    return;
+
+    met1: printf("В файле, указанном в команде описания таблицы \"%s\" содержится более одной таблицы!\n", temp->value[0].c_str());
+    exit(1);
 }
 
 // записывает в строку ext расширение файла из fname
@@ -1004,4 +1335,24 @@ bool Dom::cancelComm (const char *s)
         }
     }
     return false;
+}
+
+// возвращает ответ на вопрос вида Y/N
+bool Dom::getAnswer() const
+{
+    char ch;
+    met1: fflush(stdin);
+    ch = getchar();
+    switch(std::tolower(ch))
+    {
+    case 'y':
+        return true;
+        break;
+    case 'n':
+        return false;
+        break;
+    default:
+        goto met1;
+        break;
+    }
 }
