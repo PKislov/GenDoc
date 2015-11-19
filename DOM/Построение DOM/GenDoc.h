@@ -43,6 +43,8 @@ private:
     void writeCode(const decltype(root) p, std::string &buf);
     // вставить перечисление (команда @enumerate)
     void writeEnum (const decltype(root) p, std::string &buf);
+     // вставить таблицу (команда @table)
+    void writeTable (const decltype(root) p, std::string &buf);
     // записывает в строку s начало описания перечисления в виде @enumerate {} ...
     // метод используется в writeEnum для вывода на экран ошибок в перечислении
     std::string& infoEnumInStr (const decltype(root) p, std::string &s) const;
@@ -53,8 +55,6 @@ private:
     // записывает текст из t в buf по индексу, вычисленному методом whereInsertText, преобразует текст методом strToLaTex
     inline void writeTextLatex (const std::string &t, std::string &buf) const;
 
-    // возвращает ответ на вопрос вида Y/N
-    bool getAnswer() const;
 
     // Поиск в дереве предполагаемых синтаксических ошибок, возвращает true если ошибки найдены.
     // Способ поиска ошибок: метод рекурсивно проходит DOM, в элементах DOM с типом text ищет вхождения
@@ -70,7 +70,7 @@ private:
     // флаг существования файла "list.tmp"
     bool bflist = false;
     // список команд, по которым будут искаться синтакс. ошибки
-    std::vector<std::string> vcommands = {"@title", "@section", "@image", "@figure", "@include", "&section", "&image", "&figure", "@pageid", "&pageid", "@code", "@enumerate"};
+    std::vector<std::string> vcommands = {"@title", "@section", "@image", "@figure", "@include", "&section", "&image", "&figure", "@pageid", "&pageid", "@code", "@enumerate", "@table", "&table"};
     // структура подключаемого файла
     struct InclFiles
     {
