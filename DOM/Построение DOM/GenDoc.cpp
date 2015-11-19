@@ -317,6 +317,11 @@ void GenDoc::makeBuff (const decltype(root) p, std::string &buf)
                                             {
                                                writeEnum(p->children[i], buf);
                                             }
+                                            else
+                                                if (p->children[i]->id == table)
+                                                {
+                                                   writeTable(p->children[i], buf);
+                                                }
 
 		if (p->children[i]->children.size())
         {
@@ -514,8 +519,17 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                         // вывести команду без '\n' на конце
                         printf ("Отсутствует окончание команды \"%s ... @end enumeration\"!\n", delSymbsInEndStr(stemp).c_str());
                     }
+                    else
+                        if (p->children[i]->id == tableBegin)
+                        {
+                            std::string stemp(p->children[i]->value[0]);
+                            // вывести команду без '\n' на конце
+                            printf ("Отсутствует окончание команды \"%s ... @end table\"!\n", delSymbsInEndStr(stemp).c_str());
+                        }
             // искать ошибки в тексте
-            if (p->children[i]->id == text || p->children[i]->id == titleBegin || p->children[i]->id == codeBegin || p->children[i]->id == enumerationBegin)
+            if (p->children[i]->id == text || p->children[i]->id == titleBegin ||\
+                p->children[i]->id == codeBegin || p->children[i]->id == enumerationBegin ||\
+                p->children[i]->id == tableBegin)
             {
                 const std::string &stemp = p->children[i]->value[0]; // записать содержимое текста
                 for (decltype(stemp.size()) i1=0; i1 < stemp.size(); ++i1) // поиск подстрок в тексте
@@ -660,7 +674,45 @@ void GenDoc::showErrMessage()
 {
     if (vErrMess.size()) // если есть ошибки
     {
-        // сначала провести сортировку списка ошибок
+
+        // исправление недостатка алгоритма поиска ошибки - если например в тексте
+        // кода есть одновременно идентичные команды, но одна из них отключена знаком '\\'
+        // например @include {odt;ref:"proba.odt"} и \\@include {odt;ref:"proba.odt"},
+        // то здесь программа находила ошибку. Ниже удаляются такие ошибки из вектора ошибок.
+        for (decltype(vErrMess.size()) i=0; i < vErrMess.size(); ++i) // проход сообщений
+        {
+            // найти, в каком файле, в какой строке содержится ошибочная команда
+            for(decltype(vInclFiles.size()) i4=0; i4 < vInclFiles.size(); ++i4)
+            {
+                if (vInclFiles[i4].text.size()) // поиск подстроки
+                {
+                    // если содержимое файла длиннее либо равно длине фрагмента команды, то искать вхождение некорр. команды
+                    if (vInclFiles[i4].text.size() >= vErrMess[i].commande.size())
+                    {
+                        // проход содержимого файла
+                        for (decltype(vInclFiles[i4].text.size()) i3=0; i3 < vInclFiles[i4].text.size() - vErrMess[i].commande.size() + 1; ++i3)
+                        {
+                            // если нашли вхождение некорр. команды в файле
+                            if (!vInclFiles[i4].text.compare(i3, vErrMess[i].commande.size(), vErrMess[i].commande, 0, vErrMess[i].commande.size()))
+                            {
+                                // если перед командой стоит знак '\\', не считать ошибку
+                                if (i3 >= symbCancel.size() && !vInclFiles[i4].text.compare(i3-symbCancel.size(), symbCancel.size(), symbCancel))
+                                {
+                                    // удалить ошибку
+                                    vErrMess.erase(vErrMess.begin()+i);
+                                    --i;
+                                    goto met1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        met1:;
+        }
+
+
+        // провести сортировку списка ошибок
 
         // функтор для сравнения по имени файла
         struct
@@ -723,7 +775,7 @@ void GenDoc::writeId (const decltype(root) p, std::string &buf) const
     if (!pfind)
     {
         printf ("Необъявленная ссылка \"%s\"  в выражении \"%s\"!\n", p->value[1].c_str(), p->value[3].c_str());
-        printf("Игнорировать [Y/N] ?");
+        printf("Игнорировать [Y/N] ? ");
         if (!getAnswer()) // ответ N
         {
             puts("\nГенерация документа прервана.");
@@ -742,26 +794,6 @@ void GenDoc::writeId (const decltype(root) p, std::string &buf) const
         headerToLaTex(stemp);
         // команда на номер странцы - "\pageref"{...}, на остальные ресурсы - "\ref"{...}
         writeText("\\" + std::string(p->value[5] == "pageid" ? "page" : "") + "ref{" + stemp + "}", buf);
-}
-
-// возвращает ответ на вопрос вида Y/N
-bool GenDoc::getAnswer() const
-{
-    char ch;
-    met1: fflush(stdin);
-    ch = getchar();
-    switch(std::tolower(ch))
-    {
-    case 'y':
-        return true;
-        break;
-    case 'n':
-        return false;
-        break;
-    default:
-        goto met1;
-        break;
-    }
 }
 
 // создать ссылку на страницу - команда @pageid	{id:" ... "}
@@ -1010,4 +1042,18 @@ void GenDoc::writeEnum (const decltype(root) p, std::string &buf)
     }
     stemp += scommEnd;
     writeText(stemp, buf);
+}
+
+// вставить таблицу (команда @table)
+void GenDoc::writeTable (const decltype(root) p, std::string &buf)
+{
+    if (p->value[2] == "latex")
+    {
+        writeText(p->value[3], buf);
+    }
+    else
+        if (p->value[2] == "tag")
+        {
+
+        }
 }
