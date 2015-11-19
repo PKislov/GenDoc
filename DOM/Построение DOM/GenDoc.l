@@ -244,10 +244,78 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addOdt(yytext);\
 		 }
 
+// @table {latex}
+#define	GETTABLELATEXBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableBegin(yytext, "latex");\
+		 }
+// @end table	- на языке LaTeX или тэгами
+#define	GETENDTABLE {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableEnd(yytext);\
+		 }
+// @table {}
+#define	GETTABLETAGBEGIN {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableBegin(yytext);\
+		 }
+
+// @table {ref: " ... "}
+#define	GETTABLEREF {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable1Param(yytext);\
+		 }
+// @table {ref: " ... "; text: " ... "}
+#define	GETTABLEREF_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable2Param(yytext, 1, 2);\
+		 }
+// @table {text: " ... "; ref: " ... "}
+#define	GETTABLEREF_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable2Param(yytext, 2, 1);\
+		 }
+
+// @table {ref: " ... "; text: " ... "; id: " ... "}
+#define	GETTABLEREF_3PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 1, 2, 3);\
+		 }
+// @table {ref: " ... "; id: " ... "; text: " ... "}
+#define	GETTABLEREF_3PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 1, 3, 2);\
+		 }
+// @table {id: " ... "; ref: " ... "; text: " ... "}
+#define	GETTABLEREF_3PARAM_3 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 3, 1, 2);\
+		 }
+// @table {id: " ... "; text: " ... "; ref: " ... "}
+#define	GETTABLEREF_3PARAM_4 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 3, 2, 1);\
+		 }
+// @table {text: " ... "; ref: " ... "; id: " ... "}
+#define	GETTABLEREF_3PARAM_5 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 2, 1, 3);\
+		 }
+// @table {text: " ... "; id: " ... "; ref: " ... "}
+#define	GETTABLEREF_3PARAM_6 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTable3Param(yytext, 2, 3, 1);\
+		 }
+
+// &table {id: " ... "}
+#define	GETIDTABLE {\
+	gen->addText(yyout, fileOut);\
+	gen->addId(yytext, "table");\
+		 }
 %}
 %%  
 @[T|t][I|i][T|t][L|l][E|e][ \t\n]+				GETTITLEBEGIN
-@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]		GETTITLEEND
+@[E|e][N|n][D|d][ \t]+[T|t][I|i][T|t][L|l][E|e]			GETTITLEEND
 @[T|t][O|o][C|c][ \t]*['\n']*					GETTOC
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]1[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION1_1PARAM
 @[S|s][E|e][C|c][T|t][I|i][O|o][N|n]2[ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETSECTION2_1PARAM
@@ -310,6 +378,19 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @[E|e][N|n][D|d][ \t]+[E|e][N|n][U|u][M|m][E|e][R|r][A|a][T|t][E|e]			GETENUMEND
 @[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[O|o][D|d][T|t][ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETINCLUDEODT
 @[I|i][N|n][C|c][L|l][U|u][D|d][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[O|o][D|d][T|t][ \t]*\}		GETINCLUDEODT
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}[ \t\n]+		GETTABLELATEXBEGIN
+@[E|e][N|n][D|d][ \t]+[T|t][A|a][B|b][L|l][E|e]			GETENDTABLE
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*\}[ \t\n]+		GETTABLETAGBEGIN
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_2PARAM_1
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_2PARAM_2
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_1
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_2
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_3
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_4
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_5
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_3PARAM_6
+&[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}	GETIDTABLE
 %%
 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
@@ -436,6 +517,7 @@ argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
 
 	remove((result + ".aux").c_str()); // файл сформированный pdflatex
         remove((result + ".log").c_str()); // удалить во избежание ошибок работы pdflatex
+	remove((result + ".out").c_str());
 
 	if (type == "form") // формуляр
 	{	
