@@ -10,7 +10,7 @@ protected:
 // типы узлов
 const std::string document = "document"; // корень дерева, узел генерируется конструктором, нужен формально
 const std::string title = "title"; // заголовок документа
-const std::string titleBegin = "titlebegin";
+const std::string titleBegin = "titlebegin"; // начало команды заголовка
 const std::string toc = "toc"; // содержание (оглавление)
 const std::string section1Begin = "section1begin"; // начало команды заголовка (без имени заголовка)
 const std::string section2Begin = "section2begin";
@@ -28,6 +28,8 @@ const std::string codeBegin = "codebegin"; // начало блока кода @
 const std::string code = "code"; // код (LaTeX или другой)
 const std::string enumeration = "enum"; // перечисление
 const std::string enumerationBegin = "enumbegin"; // начало команды перечисления
+const std::string table = "table"; // таблица
+const std::string tableBegin = "tableBegin";
 const std::string nothing = "nothing"; // пустой узел
 
 const std::string symbCancel = "\\"; // символ отмены команды, например "\\@toc"
@@ -74,6 +76,8 @@ bool existFile (const std::string &fname) const;
 // функция обработки отмены команды, например "\\@toc"
 // возвращает истину, если перед командой находится символ symbCancel
 bool cancelComm (const char *s);
+// возвращает ответ на вопрос вида Y/N
+bool getAnswer() const;
 
 public:
 
@@ -119,7 +123,19 @@ void addEnumBegin(const char *s, const char *type = "", const bool symbItem = fa
 // команда @end enumerate
 void addEnum(const char *s);
 // команда @include {ref:" ... "; odt} - конвертировать файл odt в tex и вставить его содержимое
-void addOdt(const char *s);
+// refBeg - указатель на начало имени файла в строке s, если NULL то имя файла ищется с начала строки
+void addOdt(const char *s, const char *refBeg = NULL);
+// начало команды @table {}, type - тип кода (на языке LaTeX "latex" или "tag" - описана тэгами)
+void addTableBegin(const char *s, const char *type = "tag");
+// команда @end table
+void addTableEnd(const char *s);
+// команда @table {ref: " ... "}
+// refBeg - указатель на начало имени файла в строке s
+void addTable1Param(const char *s, const char *refBeg = NULL);
+// команда @table {ref: " ... "; text: " ... "}
+void addTable2Param(const char *s, int n1=1, int n2=2);
+// команда @table {ref: " ... "; text: " ... "; id: " ... "}
+void addTable3Param(const char *s, int n1=1, int n2=2, int n3=3);
 
 
 private:
