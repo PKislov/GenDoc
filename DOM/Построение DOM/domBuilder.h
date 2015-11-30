@@ -126,7 +126,8 @@ void addEnum(const char *s);
 // refBeg - указатель на начало имени файла в строке s, если NULL то имя файла ищется с начала строки
 void addOdt(const char *s, const char *refBeg = NULL);
 // начало команды @table {}, type - тип кода (на языке LaTeX "latex" или "tag" - описана тэгами)
-void addTableBegin(const char *s, const char *type = "tag");
+// n1 и n2 - порядок следования параметров в команде @table {text:"...";id:"..."}
+void addTableBegin(const char *s, const char *type = "tag", int n1=0, int n2=0);
 // команда @end table
 void addTableEnd(const char *s);
 // команда @table {ref: " ... "}
