@@ -1,0 +1,2 @@
+lex table.l
+g++ lex.yy.c table.cpp -o table -ll -std=c++11
