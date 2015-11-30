@@ -427,7 +427,7 @@ void GenDoc::writeImage (const decltype(root) p, std::string &buf) const
         label = "\\label{" + headerToLaTex(label) + "}";
 	}
 
-    stemp = "\\begin{figure}[h]\n\\center{\\includegraphics{" + p->value[3] + "}}\n" + scaption + label + "\n\\end{figure}";
+    stemp = "\\begin{figure}[ht]\n\\center{\\includegraphics{" + p->value[3] + "}}\n" + scaption + label + "\n\\end{figure}";
     writeText(stemp, buf);
 }
 
@@ -828,21 +828,32 @@ void GenDoc::writeCode(const decltype(root) p, std::string &buf)
 std::string& GenDoc::infoEnumInStr (const decltype(root) p, std::string &s) const
 {
     s.clear();
+    decltype (p->value[6].size()) i1; // индекс кода в векторе value
     if (p->id == enumeration)
     {
-        s = p->value[0];
-        delSymbsInEndStr(s);
-        for (decltype(s.size()) i=0, j=0; i < p->value[6].size(); ++i, ++j)
-        {
-            if (p->value[6][i] != '\n' && p->value[6][i] != 10)
-                s.push_back(p->value[6][i]);
-            else
-                --j;
-            if (j == 15) break;
-        }
-        delSymbsInEndStr(s);
-        s += "...";
+        i1 = 6;
     }
+    else
+        if (p->id == table)
+        {
+            i1 = 3;
+        }
+        else
+            {
+                return s;
+            }
+    s = p->value[0];
+    delSymbsInEndStr(s);
+    for (decltype(s.size()) i=0, j=0; i < p->value[i1].size(); ++i, ++j)
+    {
+        if (p->value[i1][i] != '\n' && p->value[i1][i] != 10)
+            s.push_back(p->value[i1][i]);
+        else
+            --j;
+        if (j == 15) break;
+    }
+    delSymbsInEndStr(s);
+    s += "...";
     return s;
 }
 
@@ -1054,6 +1065,70 @@ void GenDoc::writeTable (const decltype(root) p, std::string &buf)
     else
         if (p->value[2] == "tag")
         {
+            // код таблицы на языке разметки
+            const std::string &st = p->value[3];
+            //////////////////////////////////////
+            // сформировать таблицу на LaTeX
+            FILE *fin, *fout;
+            const char * const fnameIn = "tabletmp1.tmp"; // файл с описанием таблицы тэгами
+            const char * const fnameOut = "tabletmp2.tmp"; // файл с описанием таблицы на LaTeX
+            remove(fnameIn);
+            remove(fnameOut);
+            if(!(fin = fopen(fnameIn, "wt" )))
+            {
+                printf ("Не удалось открыть временный файл \"%s\"\n", fnameIn);
+                exit (1);
+            }
+            fputs (st.c_str(), fin); // записать описанием таблицы тэгами
+            fclose (fin);
+            if (std::system ((std::string("./table ") + fnameIn + " " + fnameOut).c_str())) // сформировать код таблицы
+            {
+                std::string stemp;
+                infoEnumInStr(p, stemp); // краткое описание таблицы на LaTeX
+                printf ("Ошибка построения таблицы \"%s\"!\n", stemp.c_str());
+                remove(fnameIn);
+                remove(fnameOut);
+                exit(1);
+            }
+            remove(fnameIn);
+            if(!(fout = fopen(fnameOut, "rt" ))) // записать описание таблицы на LaTeX
+            {
+                printf ("Не удалось открыть временный файл \"%s\"\n", fnameOut);
+                exit (1);
+            }
+            std::string stemp; // содержимое таблицы на LaTeX
+            char ch;
+            while(!feof(fout)) // копирование содержимого файла в вектор value узла
+            {
+                ch=getc(fout);
+                if (!feof(fout)) stemp.push_back(ch);
+            }
+            fclose(fout);
+            remove(fnameOut);
 
+            // сформировать код вставки таблицы на LaTex
+            std::string scaption; // подпись к таблице
+            // если параметр "text" в векторе value не указан (пустая строка), то подпись
+            // к таблице не делается и таблица в документе не нумеруется
+            if (p->value[6].size())
+            {
+                scaption = p->value[7];
+                scaption = "\\caption{" + headerToLaTex(scaption) + "}\n";
+            }
+
+            std::string label; // ссылка к таблице
+            if (p->value[8].size()) // если указана ссылка
+            {
+                label = p->value[9];
+                label = "\\label{" + headerToLaTex(label) + "}";
+            }
+
+            std::string sresult = "\\begin{table}[ht]\n\\begin{center}\n\\begin{tabular}"+\
+                                    stemp +\
+                                    "\n\\end{tabular}\n" +\
+                                    scaption +\
+                                    label +\
+                                    "\n\\end{center}\n\\end{table}";
+            writeText(sresult, buf);
         }
 }
