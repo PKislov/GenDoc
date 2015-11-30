@@ -4,7 +4,7 @@
 #include <string>
 #include <cctype>
 #include "GenDoc.h"
-//компилировать совместно с "domBuilder.cpp" и GenDoc.cpp
+//компилировать совместно с domBuilder.cpp и GenDoc.cpp
 
 // основной объект генератора
 static GenDoc *gen;
@@ -254,10 +254,26 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 	gen->addText(yyout, fileOut);\
 	gen->addTableEnd(yytext);\
 		 }
+
 // @table {}
 #define	GETTABLETAGBEGIN {\
 	gen->addText(yyout, fileOut);\
 	gen->addTableBegin(yytext);\
+		 }
+// @table {text: " ... "}
+#define	GETTABLETAGBEGIN_1PARAM {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableBegin(yytext, "tag", 1);\
+		 }
+// @table {text: " ... "; id: " ... "}
+#define	GETTABLETAGBEGIN_2PARAM_1 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableBegin(yytext, "tag", 1, 2);\
+		 }
+// @table {id: " ... "; text: " ... "}
+#define	GETTABLETAGBEGIN_2PARAM_2 {\
+	gen->addText(yyout, fileOut);\
+	gen->addTableBegin(yytext, "tag", 2, 1);\
 		 }
 
 // @table {ref: " ... "}
@@ -381,6 +397,9 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 @[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[L|l][A|a][T|t][E|e][X|x][ \t]*\}[ \t\n]+		GETTABLELATEXBEGIN
 @[E|e][N|n][D|d][ \t]+[T|t][A|a][B|b][L|l][E|e]			GETENDTABLE
 @[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*\}[ \t\n]+		GETTABLETAGBEGIN
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLETAGBEGIN_1PARAM
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLETAGBEGIN_2PARAM_1
+@[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[I|i][D|d][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLETAGBEGIN_2PARAM_2
 @[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF
 @[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_2PARAM_1
 @[T|t][A|a][B|b][L|l][E|e][ \t]*\{[ \t]*[T|t][E|e][X|x][T|t][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*;[ \t]*[R|r][E|e][F|f][ \t]*:[ \t]*\"[^"\""]*\"[ \t]*\}		GETTABLEREF_2PARAM_2
