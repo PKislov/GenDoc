@@ -194,7 +194,8 @@ void Dom::addCode(const char *s, const char *type) // окончание ком�
 }
 
 // начало команды @table {}, type - тип кода (на языке LaTeX "latex" или "tag" - описана тэгами)
-void Dom::addTableBegin(const char *s, const char *type)
+// n1 и n2 - порядок следования параметров в команде @table {text:"...";id:"..."}
+void Dom::addTableBegin(const char *s, const char *type, int n1, int n2)
 {
     // если перед командой стоит знак '\\'
     if (cancelComm (s))
@@ -204,11 +205,64 @@ void Dom::addTableBegin(const char *s, const char *type)
     temp = addChild(temp);
     temp->id = tableBegin;
     // для поисковика ошибок записать текст команды в оригинальном регистре
-    temp->value.push_back(s);
+    temp->value.push_back(s); // [0]
     // замена в строке последовательности символов "\\a" на одну кавычку "
     SeqSymbContrReplace(temp->value.back());
-    temp->value.push_back("type");
-    temp->value.push_back(type); // записать тип кода (LaTeX или на тэгах)
+    temp->value.push_back("type"); // [1]
+    temp->value.push_back(type); // записать тип кода (LaTeX или на тэгах) [2]
+    temp->value.push_back(""); // под код таблицы на языке LaTeX или на тэгах [3]
+
+    if (std::string("tag") == type)
+    {
+        temp->value[2] = type; // "tag"
+        temp->value.push_back(""); // ref [4]
+        temp->value.push_back(""); // значение ref [5]
+        temp->value.push_back(""); // text [6]
+        temp->value.push_back(""); // значение text [7]
+        temp->value.push_back(""); // id [8]
+        temp->value.push_back(""); // значение id [9]
+
+        if (n1) // если команда @table {text: " ... "}
+        {
+            auto refBeg = s; // должен указывать на первый символ параметра
+            temp->value[6] = "text"; // задать подпись
+            for (int i=0; i < n1*2-1; ++i)
+            {
+                while(*refBeg != '\"') ++refBeg; ++refBeg; // дойти до начала text
+            }
+            while(*refBeg != '\"') temp->value[7].push_back(*refBeg), ++refBeg; ++refBeg; // запись подписи
+            SeqSymbContrReplace(temp->value[7]);
+            if (temp->value[7].find("\n\n", 0) != std::string::npos)
+            {
+                printf("В команде описания таблицы \"%s\" нельзя использовать двойные переходы на новую строку!", temp->value[0].c_str());
+                exit(1);
+            }
+
+            if (n2) // если команда @table {text: " ... "; id: " ... "}
+            {
+                refBeg = s;
+                temp->value[8] = "id";
+                for (int i=0; i < n2*2-1; ++i)
+                {
+                    while(*refBeg != '\"') ++refBeg; ++refBeg; // дойти до начала id
+                }
+                while(*refBeg != '\"') temp->value[9].push_back(*refBeg), ++refBeg; ++refBeg; // запись id
+                SeqSymbContrReplace(temp->value[9]);
+                if (temp->value[9].find("\n\n", 0) != std::string::npos)
+                {
+                    printf("В команде описания таблицы \"%s\" нельзя использовать двойные переходы на новую строку!", temp->value[0].c_str());
+                    exit(1);
+                }
+                if (!temp->value[9].size())
+                {
+                    printf("В команде описания таблицы \"%s\" нельзя использовать пустое значение ссылки!\n", temp->value[0].c_str());
+                    exit(1);
+                }
+                // если ссылка уже объявлена
+                showDuplicateIdInDom(temp);
+            }
+        }
+    }
     temp = temp->parent;
 }
 // команда @end table
@@ -229,7 +283,7 @@ void Dom::addTableEnd(const char *s)
         {
             pfind = temp->children[i];
             temp->children[i]->id = table;
-            temp->children[i]->value.push_back(""); // под код таблицы на языке LaTeX или на тэгах
+            // temp->children[i]->value.push_back(""); // под код таблицы на языке LaTeX или на тэгах [3]
                 // если пустой текст блока кода
                 if(i-1 == -1)
                     return;
@@ -705,7 +759,7 @@ std::string::size_type Dom::getIndexId(const struct node *p) const
             if (p->id == pageid)
                 return 1;
             else
-                if (p->id == table && p->value.size() == 10 && p->value[8].size())
+                if ((p->id == table || p->id == tableBegin) && p->value.size() == 10 && p->value[8].size())
                     return 9;
                 else
                     return 0;
@@ -724,7 +778,7 @@ std::string::size_type Dom::getIndexYytext(const struct node *p) const
             if (p->id == pageid)
                 return 3;
             else
-                if (p->id == table && p->value.size() == 10 && p->value[8].size())
+                if ((p->id == table || p->id == tableBegin) && p->value.size() == 10 && p->value[8].size())
                     return 0;
                 else
                     return 0;
