@@ -419,9 +419,6 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // Пример команды: ./GenDoc data.txt form odt
 int main(int argc, char *argv[])
 {
-
-argc = 4; argv[1] = "dat.txt"; argv[2] = "form"; argv[3] = "pdf";
-
 	if (argc < 2)
 	{
 		puts("Не указано имя входного файла!");
