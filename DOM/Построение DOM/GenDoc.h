@@ -45,7 +45,7 @@ private:
     void writeEnum (const decltype(root) p, std::string &buf);
      // вставить таблицу (команда @table)
     void writeTable (const decltype(root) p, std::string &buf);
-    // записывает в строку s начало описания перечисления в виде @enumerate {} ...
+    // записывает в строку s начало описания перечисления (или таблицы) в виде @enumerate {} ...
     // метод используется в writeEnum для вывода на экран ошибок в перечислении
     std::string& infoEnumInStr (const decltype(root) p, std::string &s) const;
     // делает то же самое, что headerToLaTex, только еще дублирует переходы на новую строку
