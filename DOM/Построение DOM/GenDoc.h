@@ -11,9 +11,10 @@ public:
     GenDoc() {}
     ~GenDoc() {}
 
-    // метод генерации документа формуляр, в параметрах - имя вых. файла без расширения, флаг findErrSyntax - запускать ли метод поиска синтаксических ошибок в дереве, формат вых. данных (pdf, odt, tex и т.д.).
+    // метод генерации документа, в параметрах - имя вых. файла без расширения, флаг findErrSyntax - запускать ли метод поиска синтаксических ошибок в дереве, формат вых. данных (pdf, odt, tex и т.д.).
     // Возвращает истину, если генерация прошла успешно
-    bool genForm (const std::string &fName, const bool findErrSyntax = true, const std::string &format = "pdf");
+    // typeDoc - тип документа (формуляр, произв. текст)
+    bool genDocument (const std::string &fName, const bool findErrSyntax = true, const std::string &typeDoc = "text", const std::string &format = "pdf");
 
 
 private:
@@ -54,6 +55,9 @@ private:
     const std::string& headerToLaTex (std::string &s) const;
     // записывает текст из t в buf по индексу, вычисленному методом whereInsertText, преобразует текст методом strToLaTex
     inline void writeTextLatex (const std::string &t, std::string &buf) const;
+
+    // тип документа (формуляр, произв. текст)
+    std::string type = "text";
 
 
     // Поиск в дереве предполагаемых синтаксических ошибок, возвращает true если ошибки найдены.
