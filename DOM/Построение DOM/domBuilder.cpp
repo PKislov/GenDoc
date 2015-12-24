@@ -2,6 +2,11 @@
 #include <cstring>
 #include <cctype>
 #include <vector>
+//#include <fstream>
+//#include <streambuf>
+//#include <ios>
+//#include <iostream>
+//#include <memory>
 #include "domBuilder.h"
 
 Dom::Dom()
@@ -643,7 +648,9 @@ void Dom::addText(FILE *f, const char *name) // Текст
     // В файл f перенаправлен поток символов между командами.
     // Перед обработкой любой команды текст нужно записать
     // в дерево и обнулить файл.
+
     fclose(f);
+
     if (!(f = fopen(name, "rt")) || feof (f))
     {
         printf ("Не удалось открыть временный файл \"%s\"\n", name);
@@ -667,7 +674,28 @@ void Dom::addText(FILE *f, const char *name) // Текст
         ch=fgetc(f);
         if (!feof(f)) temp->value.back().push_back(ch);
     }
+
     fclose(f);
+
+/*std::ifstream is(name);
+if (!is.is_open())
+    {
+        printf ("Не удалось открыть временный файл \"%s\"\n", name);
+		exit (1);
+    }
+    //здесь получим размер файла
+  is.seekg (0, std::ios::end);
+  unsigned long long len = is.tellg();
+  is.seekg (0, std::ios::beg);
+char * buffer = new char [len+1];
+  is.read (buffer,len);
+  buffer[len-1] = '\0';
+
+is.close();
+temp->value.back() = buffer;
+delete[] buffer;*/
+
+
     remove(name);
     // замена в строке последовательности символов "\\a" на "\""
     SeqSymbContrReplace(temp->value.back(), false);
@@ -1394,10 +1422,8 @@ bool Dom::cancelComm (const char *s)
 // возвращает ответ на вопрос вида Y/N
 bool Dom::getAnswer() const
 {
-    char ch;
     met1: fflush(stdin);
-    ch = getchar();
-    switch(std::tolower(ch))
+    switch(std::tolower(getchar()))
     {
     case 'y':
         return true;
