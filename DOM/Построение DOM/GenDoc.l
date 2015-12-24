@@ -415,8 +415,8 @@ static const char * const fileOut = "temp.tmp"; // временный файл, 
 // В командной строке пользователь должен указать имя исходного файла, тип документа и формат выходного файла (по умолчанию pdf).
 // Форматы: odt, pdf, html, xml (в формате html), tei (формат TEI XML), db (DocBook, в xml) - требуется TexLive
 // 	    через pandoc: doc (сначала в html через TexLive, затем в doc через pandoc), docx, markdown
-// Тип документа: form - формуляр
-// Пример команды: ./GenDoc data.txt form odt
+// Тип документа: form - формуляр, text - произвольный документ
+// Пример команды: ./gendoc data.txt form odt
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -424,13 +424,15 @@ int main(int argc, char *argv[])
 		puts("Не указано имя входного файла!");
 		return 1;
 	}
-	if (argc < 3)
+
+	std::string type = argc < 3 ? "text" : argv[2]; // тип генерируемого документа (формуляр, ...)
+	for (decltype(type.size()) i=0; i < type.size(); ++i) type[i] = tolower(type[i]); // перевести в нижний регистр
+	if (type != "form" && type != "text")
 	{
 		// TODO: вставить в сообщение типы всех возможных генерируемых документов
-		puts("Не указан тип выходного документа!\nНапример: form - формуляр\n");
+		printf ("Тип документа \"%s\" не поддерживается программой. Указывайте следующие форматы:\n text - произвольный текст\n form - формуляр\n", type.c_str());
 		return 1;
 	}
-
 
 	std::string stemp("./fileRing ");
 	stemp += argv[1];
@@ -444,7 +446,6 @@ int main(int argc, char *argv[])
 	if (std::system (stemp.c_str())) // выполнить команды @include, результат запишется в файл fSrcIncl
 		return 1;
 	fileIn = fSrcIncl;
-
 
 
 
@@ -494,7 +495,8 @@ int main(int argc, char *argv[])
 		printf ("Не удалось открыть временный файл \"%s\"\n", fileOut);
 		return 1;
 	}
-	gen = new GenDoc(); 
+	gen = new GenDoc();
+
 	yylex(); // запуск лексера, заполнение дерева
 	gen->addText(yyout, fileOut); // записать в дерево произвольный текст после последней команды, или всё содержимое вх. файла, если ни одной команды не встретилось
 
@@ -505,10 +507,8 @@ int main(int argc, char *argv[])
 	fileIn = argv[1];
 
 
-	std::string result(""); // имя генерируемого документа
+	std::string result; // имя генерируемого документа
 	std::string format; // расширение генерируемого документа. Переменная нужна для преобразования строки формата в нижний регистр
-	std::string type = argv[2]; // тип генерируемого документа (формуляр, ...)
-	for (decltype(type.size()) i=0; i < type.size(); ++i) type[i] = tolower(type[i]); // перевести в нижний регистр
 
 	// получение имени и расширения генерируемого документа
 		int i = 0;
@@ -535,21 +535,24 @@ int main(int argc, char *argv[])
         remove((result + ".log").c_str()); // удалить во избежание ошибок работы pdflatex
 	remove((result + ".out").c_str());
 
-	if (type == "form") // формуляр
-	{	
-		gen->genForm(result, true, format); // запуск генератора документа
-		remove((result + ".toc").c_str()); // удалить временный файл .toc
+	gen->genDocument(result, true, type, format); // запуск генератора документа
+	remove((result + ".toc").c_str()); // удалить временный файл .toc
 
 		// сформировать строку result - нужна теперь только для добавления к имени документа "Формуляр " и вывода сообщения пользователю в конце функции main
 		if (format == "odt" || format == "pdf" || format == "doc"  || format == "docx")
 		{
-			stemp = "Формуляр " + result + "." + format;
+			std::string stemp2;
+			if (type == "form") 
+			{
+				stemp2 = "Формуляр ";
+			}
+			stemp = stemp2 + result + "." + format;
 			if(rename((result + "." + format).c_str(), stemp.c_str()))
 			{
 				puts("Внутренняя ошибка приложения.");
 				return 1;
 			}
-			result=stemp;
+			result = stemp;
 		}
 		else // если формат tex, html, xml и др., не добавлять к имени "Формуляр "
 			{
@@ -565,14 +568,6 @@ int main(int argc, char *argv[])
 							result += ("." + format);
 			}
 		
-	} // TODO: вставить вызовы генерации других типов документов
-	else // if (type == "form")
-		{
-			// TODO: вставить в сообщение типы всех возможных генерируемых документов
-			printf ("Тип документа \"%s\" не поддерживается программой.\nНапример: form - формуляр\n", type.c_str());
-			return 1;
-		}
-
 
 	delete gen; // удалить генератор из памяти
 	printf("Выполнено. Данные записаны в \"%s\"\n", result.c_str());
