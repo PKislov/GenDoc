@@ -6,13 +6,26 @@
 #include <algorithm>
 #include "GenDoc.h"
 
-bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const std::string &format)
+// метод генерации документа, в параметрах - имя вых. файла без расширения, флаг findErrSyntax - запускать ли метод поиска синтаксических ошибок в дереве, формат вых. данных (pdf, odt, tex и т.д.).
+// Возвращает истину, если генерация прошла успешно
+// typeDoc - тип документа (формуляр, произв. текст)
+bool GenDoc::genDocument (const std::string &fName, const bool findErrSyntax, const std::string &typeDoc, const std::string &format)
 {
     // сначала открыть шаблон в LaTeX и вывести результат в файл result,
     // затем перевести result в требуемый формат (format)
 
+    type = typeDoc;
+
     std::string result = fName + ".tex"; // имя файла, куда предварительно записать документ в LaTeX
-    std::string templ = "templateForm.tex"; // имя файла шаблона
+    std::string templ;
+    if (type == "form")
+    {
+        templ = "templateForm.tex"; // имя файла шаблона
+    }
+    else
+    {
+        templ = "templateText.tex";
+    }
     FILE *fres; // результат в LaTeX
     FILE *ftempl; // шаблон
 
@@ -34,11 +47,11 @@ bool GenDoc::genForm (const std::string &fName, const bool findErrSyntax, const 
 
     if (!(ftempl = fopen(templ.c_str(), "rt")))
     {
-        printf ("Отсутствует файл шаблона формуляра \"%s\"!\n", result.c_str());
+        printf ("Отсутствует файл шаблона документа \"%s\"!\n", templ.c_str());
 		exit (1);
     }
 
-    std::string templBuf(""); // буфер содержимого файла шаблона
+    std::string templBuf; // буфер содержимого файла шаблона
     char ch;
     while(!(feof(ftempl))) // записать в буфер файла шаблона
     {
@@ -517,7 +530,7 @@ const std::string& GenDoc::strToLaTex (std::string &s) const
                     {
                         std::string stemp(p->children[i]->value[0]);
                         // вывести команду без '\n' на конце
-                        printf ("Отсутствует окончание команды \"%s ... @end enumeration\"!\n", delSymbsInEndStr(stemp).c_str());
+                        printf ("Отсутствует окончание команды \"%s ... @end enumerate\"!\n", delSymbsInEndStr(stemp).c_str());
                     }
                     else
                         if (p->children[i]->id == tableBegin)
